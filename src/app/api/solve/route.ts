@@ -7,23 +7,15 @@ export async function POST(req: NextRequest) {
         const name = formData.get("name") as string;
         const rollNo = formData.get("rollNo") as string;
         const batch = formData.get("batch") as string;
-        const utr = formData.get("utr") as string;
         const file = formData.get("file") as File;
 
-        if (!name || !rollNo || !batch || !utr || !file) {
+        if (!name || !rollNo || !batch || !file) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
             );
         }
 
-        // Verify UTR length (basic mock validation)
-        if (utr.length !== 12) {
-            return NextResponse.json(
-                { error: "Invalid UTR. Must be 12 digits." },
-                { status: 400 }
-            );
-        }
 
         // In a real application, we would call the Gemini API here:
         // const fileBuffer = await file.arrayBuffer();

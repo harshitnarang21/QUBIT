@@ -17,7 +17,7 @@ export default function RootLayout({
         <main className="app-container">
           <nav className="navbar glass">
             <div className="nav-logo">
-              <span className="gradient-text">Qubit Solver</span>
+              <span className="gradient-text">Quubit Solver</span>
             </div>
           </nav>
           {children}
