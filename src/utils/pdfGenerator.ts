@@ -35,31 +35,50 @@ export async function generateAssignmentPDF(
     doc.text(`Batch/Section: ${batch}`, margin + pageWidth / 2, yPosition + 20);
     yPosition += 50;
 
-    // Solution Section
+    // Solution Section Title
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(0, 0, 0);
-    doc.text("AI Generated Solution", margin, yPosition);
-    yPosition += 10;
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text("Assignment Solutions", margin, yPosition);
+    yPosition += 8;
 
     doc.setDrawColor(59, 130, 246);
-    doc.setLineWidth(0.5);
+    doc.setLineWidth(1);
     doc.line(margin, yPosition, pageWidth - margin, yPosition);
-    yPosition += 10;
+    yPosition += 15;
 
     // Solution Content
     doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
 
-    const textLines = doc.splitTextToSize(solutionText, pageWidth - margin * 2);
+    // Process text line by line to add basic styling based on content
+    const rawLines = solutionText.split('\n');
 
-    textLines.forEach((line: string) => {
-        if (yPosition > doc.internal.pageSize.getHeight() - margin) {
-            doc.addPage();
-            yPosition = margin;
-        }
-        doc.text(line, margin, yPosition);
-        yPosition += 7;
+    rawLines.forEach((rawLine) => {
+        // Handle long lines that need wrapping
+        const wrappedLines = doc.splitTextToSize(rawLine, pageWidth - margin * 2);
+
+        wrappedLines.forEach((line: string) => {
+            if (yPosition > doc.internal.pageSize.getHeight() - margin - 15) {
+                doc.addPage();
+                yPosition = margin + 10;
+            }
+
+            // Quick formatting check
+            if (line.trim().toUpperCase().startsWith("QUESTION")) {
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(59, 130, 246); // Blue
+                yPosition += 5; // Extra space before question
+            } else if (line.trim().toUpperCase().startsWith("SOLUTION")) {
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(16, 185, 129); // Emerald Green
+            } else {
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(51, 65, 85); // Slate 700
+            }
+
+            doc.text(line, margin, yPosition);
+            yPosition += 7; // Line height
+        });
     });
 
     // Footer Message

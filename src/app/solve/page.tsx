@@ -31,7 +31,8 @@ export default function SolvePage() {
                 return;
             }
         } else if (step === 3) {
-            handleRazorpayPayment();
+            // handleRazorpayPayment(); // COMMENTED OUT FOR TESTING
+            processAssignment();
             return;
         }
         setError("");
@@ -244,7 +245,7 @@ export default function SolvePage() {
                                 </button>
                             )}
                             <button className={styles.primaryButton} onClick={handleNext}>
-                                {step === 3 ? "Pay & Solve ₹10" : "Continue"} <ArrowRight size={18} />
+                                {step === 3 ? "Bypass Payment & Solve" : "Continue"} <ArrowRight size={18} />
                             </button>
                         </div>
                     )}
