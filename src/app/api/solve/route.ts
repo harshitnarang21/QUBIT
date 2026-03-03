@@ -25,26 +25,12 @@ export async function POST(req: NextRequest) {
 
         let solution = "";
 
-        try {
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: [
-                    {
-                        role: "user",
-                        parts: [
-                            {
-                                inlineData: {
-                                    data: Buffer.from(fileBuffer).toString("base64"),
-                                    mimeType: file.type,
-                                }
-                            },
-                            {
-                                text: `You are an expert professor of Digital Design and Digital Electronics with 20+ years of teaching experience. A student has submitted their assignment for a complete, well-formatted solution.
+        const promptTemplate = `You are an expert professor of Digital Design and Digital Electronics with 20+ years of teaching experience. A student has submitted their assignment for a complete, well-formatted solution.
 
 STUDENT INFORMATION:
-- Name: ${name}
-- Roll Number: ${rollNo}
-- Batch / Section: ${batch}
+- Name: {{STUDENT_NAME}}
+- Roll Number: {{ROLL_NUMBER}}
+- Batch / Section: {{BATCH}}
 - Subject: Digital Design
 - Institute: University
 
@@ -111,9 +97,9 @@ FORMATTING RULES:
 
    // ============================================================
    // Module     : [module name]
-   // Student    : ${name}
-   // Roll No.   : ${rollNo}
-   // Batch      : ${batch}
+   // Student    : {{STUDENT_NAME}}
+   // Roll No.   : {{ROLL_NUMBER}}
+   // Batch      : {{BATCH}}
    // Subject    : Digital Design
    // Description: [brief description of what this module does]
    // ============================================================
@@ -152,7 +138,28 @@ IMPORTANT RULES:
 - Write all math in plain readable text
 - Be thorough and academically correct
 - If a question is unclear, state your assumption clearly before solving
-- Always use the student's name in ALL Verilog code comments — never leave it generic`
+- Always use {{STUDENT_NAME}}'s name in ALL Verilog code comments — never leave it generic`;
+
+        const finalPrompt = promptTemplate
+            .replace(/{{STUDENT_NAME}}/g, name)
+            .replace(/{{ROLL_NUMBER}}/g, rollNo)
+            .replace(/{{BATCH}}/g, batch);
+
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            {
+                                inlineData: {
+                                    data: Buffer.from(fileBuffer).toString("base64"),
+                                    mimeType: file.type,
+                                }
+                            },
+                            {
+                                text: finalPrompt
                             }
                         ]
                     }
