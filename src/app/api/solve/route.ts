@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenAI } from "@google/genai";
 
 export async function POST(req: NextRequest) {
     try {
@@ -16,58 +17,39 @@ export async function POST(req: NextRequest) {
             );
         }
 
-
         // In a real application, we would call the Gemini API here:
-        // const fileBuffer = await file.arrayBuffer();
-        // const solution = await fetchGeminiSolution(fileBuffer);
+        const fileBuffer = await file.arrayBuffer();
 
-        // Simulate AI Processing Delay
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        // Initialize Gemini
+        const ai = new GoogleGenAI({ apiKey: "AIzaSyB15eBt1vNRMqJcmeIwjBVXKwh6fn2T2IA" });
 
-        // MOCK SOLUTION for Digital Design
-        const mockSolution = `
-Digital Design Assignment Solution
+        let solution = "";
 
-Question 1: Simplify the boolean expression F(A,B,C) = Σm(0, 1, 3, 5, 7) using a K-Map.
-
-Solution:
-Let's plot the terms in a 3-variable Karnaugh Map (K-Map):
-- The minterms are m0, m1, m3, m5, and m7.
-
-Grouping:
-1. We can form a quad with m1, m3, m5, m7. This group eliminates variable B and variable A, leaving us with 'C'.
-2. The remaining 1 is at m0. We can group m0 with m1. This group eliminates variable C, leaving us with 'A'B''.
-
-Final Simplified Expression:
-F(A,B,C) = C + A'B'
-
-----------------------------------------------------
-
-Question 2: Design a 2-to-4 line decoder using NAND gates only.
-
-Solution:
-A 2-to-4 decoder has 2 inputs (A, B) and 4 outputs (Y0, Y1, Y2, Y3).
-Truth Table:
-A B | Y0 Y1 Y2 Y3
-0 0 | 1  0  0  0
-0 1 | 0  1  0  0
-1 0 | 0  0  1  0
-1 1 | 0  0  0  1
-
-Expressions using standard AND logic (Active High):
-Y0 = A'B'
-Y1 = A'B
-Y2 = AB'
-Y3 = AB
-
-To convert this to NAND logic (Active Low outputs):
-Y0' = (A'B')' = A + B
-Y1' = (A'B)' = A + B'
-Y2' = (AB')' = A' + B
-Y3' = (AB)'  = A' + B'
-
-This completes the basic design required for your assignment. Please double check the circuit diagram in your textbook standard logic families.
-    `.trim();
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            {
+                                inlineData: {
+                                    data: Buffer.from(fileBuffer).toString("base64"),
+                                    mimeType: file.type,
+                                }
+                            },
+                            {
+                                text: "You are an expert Digital Design and Computer Science Tutor. Please solve all the questions presented in this assignment document. Provide step-by-step, clear, and perfectly formatted text explanations. If there are boolean equations, k-maps, or logic circuit designs, explain them clearly in text format suitable for a PDF report without markdown formatting (do not use * or # or \`\`). Your output will go directly into a student's generated assignment PDF."
+                            }
+                        ]
+                    }
+                ]
+            });
+            solution = response.text || "No solution generated.";
+        } catch (apiError) {
+            console.error("Gemini API Error:", apiError);
+            return NextResponse.json({ error: "Failed to generate solution from AI" }, { status: 500 });
+        }
 
         return NextResponse.json({
             success: true,
@@ -75,7 +57,7 @@ This completes the basic design required for your assignment. Please double chec
                 name,
                 rollNo,
                 batch,
-                solution: mockSolution
+                solution: solution
             }
         });
 
