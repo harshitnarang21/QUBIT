@@ -706,7 +706,7 @@
         <div class="pr tot"><span>Total</span><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">₹
             10.00</span></div>
       </div>
-      <button class="btn bg" id="payBtn" onclick="pay()">⚡ Bypass Payment &amp; Get Solution</button>
+      <button class="btn bg" id="payBtn" onclick="pay()">🔒 Pay ₹10 &amp; Get Solution</button>
       <button class="btn bgh" onclick="gs(2)">← Back</button>
     </div>
 
@@ -837,8 +837,19 @@
 
     /* ── Payment ── */
     function pay() {
-      // DEV MODE: BYPASS PAYMENT
-      solve(); return;
+      if (RK === 'YOUR_RAZORPAY_KEY_ID') {
+        if (!confirm('DEV MODE: No Razorpay key. Proceed without payment for testing?')) return;
+        solve(); return;
+      }
+      document.getElementById('payBtn').disabled = true;
+      const opts = {
+        key: RK, amount: 1000, currency: 'INR', name: 'Quubit', description: SD.subject + ' Solution',
+        handler: () => solve(), prefill: { name: SD.name }, theme: { color: '#c9922a' },
+        modal: { ondismiss: () => document.getElementById('payBtn').disabled = false }
+      };
+      const rzp = new Razorpay(opts);
+      rzp.on('payment.failed', () => { err(3, 'Payment failed. Please try again.'); document.getElementById('payBtn').disabled = false });
+      rzp.open();
     }
 
     /* ── Extract PDF ── */
