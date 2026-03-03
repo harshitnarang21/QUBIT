@@ -3,182 +3,221 @@ import { GoogleGenAI } from "@google/genai";
 
 export async function POST(req: NextRequest) {
     try {
-        const formData = await req.formData();
+        const body = await req.json();
+        const { student, assignmentText } = body;
 
-        const name = formData.get("name") as string;
-        const rollNo = formData.get("rollNo") as string;
-        const batch = formData.get("batch") as string;
-        const file = formData.get("file") as File;
-
-        if (!name || !rollNo || !batch || !file) {
+        if (!student || !student.name || !student.roll || !student.batch || !student.subject || !assignmentText) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
             );
         }
 
-        // In a real application, we would call the Gemini API here:
-        const fileBuffer = await file.arrayBuffer();
-
         // Initialize Gemini
         const ai = new GoogleGenAI({ apiKey: "AIzaSyB15eBt1vNRMqJcmeIwjBVXKwh6fn2T2IA" });
 
-        let solution = "";
-
-        const promptTemplate = `You are an expert professor of Digital Design and Digital Electronics with 20+ years of teaching experience. A student has submitted their assignment for a complete, well-formatted solution.
+        const promptTemplate = `You are an expert Digital Design professor. Solve the student's assignment completely.
+Your response will be directly converted to a PDF and submitted — it must be 100% clean,
+professional, and publication-ready. Zero tolerance for messy output.
 
 STUDENT INFORMATION:
 - Name: {{STUDENT_NAME}}
 - Roll Number: {{ROLL_NUMBER}}
 - Batch / Section: {{BATCH}}
-- Subject: Digital Design
-- Institute: University
+- Subject: {{SUBJECT}}
+- Institute: {{INSTITUTE}}
 
 ASSIGNMENT CONTENT:
-Please solve the questions found in the attached document.
+{{ASSIGNMENT_TEXT}}
 
----
+═══════════════════════════════════════════════
+ABSOLUTE RULES — VIOLATING ANY OF THESE IS NOT ALLOWED
+═══════════════════════════════════════════════
 
-INSTRUCTIONS FOR SOLVING:
+RULE 1 — NO THINKING OUT LOUD
+Never write your reasoning process, trial-and-error, self-corrections, or working notes
+anywhere in the output. The following types of lines are STRICTLY FORBIDDEN:
+  ✗ "Let's try...", "Wait, that's wrong...", "Let me reconsider..."
+  ✗ "This is not right.", "Actually...", "No, this is incorrect."
+  ✗ "A simpler approach would be...", "We can also use..."
+  ✗ Any comment that says something was wrong or is being corrected
+  ✗ Any line that shows you changing your mind mid-answer
+Only write the FINAL, CORRECT answer. Never show working doubts.
 
-Solve every question found in the assignment above. Follow ALL formatting and content rules below strictly.
+RULE 2 — VERILOG CODE MUST BE PERFECT
+  ✗ NEVER put reasoning, confusion, or trial-and-error inside code comments
+  ✗ NEVER declare wires or variables in the middle of the module — ALL wire/reg
+    declarations go at the TOP of the module, before any gate instantiations
+  ✗ NEVER write comments like "// this may not be right" or "// let's try this"
+  ✓ Every comment must be a clean, factual description of what that specific line does
+  ✓ Every module MUST have the student header block shown below
+  ✓ All signal names must be meaningful (not just w1, w2, w3... — use descriptive names
+    like xor_ab, borrow_a_not, etc.)
 
----
+RULE 3 — NO REDUNDANT DERIVATIONS
+  ✗ Do NOT repeat the same Boolean expression 4-5 times with minor changes
+  ✗ Do NOT show multiple failed simplification attempts
+  ✓ Show the derivation ONCE, cleanly, step by step to the final answer
 
-FORMATTING RULES:
+RULE 4 — NO FILLER TEXT
+  ✗ Do not start answers with "Great question!" or "Certainly!" or similar phrases
+  ✗ Do not repeat the question back before answering it
 
-1. SECTION HEADINGS
-   Use ## for main sections (e.g., ## Introduction, ## Conclusion)
-   Use ### for sub-sections if needed
+═══════════════════════════════════════════════
+FORMATTING RULES
+═══════════════════════════════════════════════
 
-2. QUESTIONS
-   Format each question as:
-   **Question [number]: [Question Title or Brief Description]**
-   Then write the full solution below it.
+STRUCTURE:
+  ## Introduction
+  [2–3 sentences about the subject and what this assignment covers]
 
-3. BOOLEAN EXPRESSIONS & LOGIC
-   - Write Boolean expressions clearly in plain text
-   - Example: F = A'B + AB'C, Y = (A + B)'·C
-   - Clearly show each step of simplification
+  **Question [N]: [Title]**
+  [Complete solution]
+  **Key Concept:** [One clean sentence summarizing the core idea]
 
-4. TRUTH TABLES
-   Format using plain text with pipe separators, like:
-   
-   | A | B | C | Output F |
-   |---|---|---|----------|
-   | 0 | 0 | 0 |    0     |
-   | 0 | 0 | 1 |    1     |
-   (complete all rows)
+  ## Conclusion
+  [2–3 sentence summary]
 
-5. K-MAPS (KARNAUGH MAPS)
-   - State the number of variables
-   - List the minterms / maxterms
-   - Describe all groups (pairs, quads, octets) clearly
-   - Show the simplified Boolean expression as the final result
-   - Example: "Group 1 (Quad): cells 0,1,4,5 → eliminates B and C → gives A'"
+TRUTH TABLES — use this exact format:
+  | A | B | Bin | D | Bout |
+  |---|---|-----|---|------|
+  | 0 | 0 |  0  | 0 |  0   |
+  (fill all rows completely, no skipping)
 
-6. LOGIC CIRCUITS
-   - Describe gate connections step by step
-   - Name each gate clearly (AND, OR, NOT, NAND, NOR, XOR, XNOR)
-   - Describe input-to-output signal flow
-   - Example: "Input A and B' feed into AND gate G1, output of G1 and C feed into OR gate G2..."
+BOOLEAN EXPRESSIONS:
+  - One expression per line
+  - Show simplification steps clearly and ONCE only
+  - Use plain text: A', A XOR B, A XNOR B (no LaTeX, no $...$ symbols)
+  - Example: Bout = A'B + A'Bin + BBin
 
-7. FLIP-FLOPS & SEQUENTIAL CIRCUITS
-   - Show the excitation table if relevant
-   - Show state transition table
-   - Describe Q(next) equations clearly
+K-MAPS:
+  - State number of variables
+  - List minterms clearly
+  - Describe each group (pair/quad/octet) in ONE line each
+  - Write the final simplified expression
 
-8. NUMBER SYSTEM CONVERSIONS
-   - Show every step of the conversion
-   - Label each step clearly (e.g., "Step 1: Divide by 2...")
+VERILOG DESIGN MODULE — every module must follow this exact structure:
 
-9. VERILOG CODE (CRITICAL RULE)
-   - Every Verilog module must include a header comment block at the top exactly like this:
+  // ============================================================
+  // Module     : [module_name]
+  // Student    : {{STUDENT_NAME}}
+  // Roll No.   : {{ROLL_NUMBER}}
+  // Batch      : {{BATCH}}
+  // Subject    : {{SUBJECT}}
+  // Description: [one clean sentence describing the module]
+  // ============================================================
+  module module_name (
+      input  wire A,        // [what this input represents]
+      input  wire B,        // [what this input represents]
+      output wire D         // [what this output represents]
+  );
 
-   // ============================================================
-   // Module     : [module name]
-   // Student    : {{STUDENT_NAME}}
-   // Roll No.   : {{ROLL_NUMBER}}
-   // Batch      : {{BATCH}}
-   // Subject    : Digital Design
-   // Description: [brief description of what this module does]
-   // ============================================================
+      // ── Wire Declarations ──────────────────────────────────
+      wire [descriptive_name];   // [what this wire carries]
+      wire [descriptive_name];   // [what this wire carries]
+      // (ALL wires declared here, before any logic)
 
-   - All major sections inside the code (ports, wires, always blocks, assign statements) must have inline comments explaining what they do
-   - Variable and signal names must be meaningful and clearly named
-   - Every endmodule must have a comment: // end of module [module name]
+      // ── [Section Name e.g. "Difference Logic"] ─────────────
+      [gate instantiations with one-line comment each]
 
-10. EXPLANATIONS
-    - After every answer, add a short "Key Concept" note:
-    - Example: **Key Concept:** A Full Adder adds three 1-bit inputs and produces a Sum and Carry output.
+      // ── [Section Name e.g. "Borrow-out Logic"] ─────────────
+      [gate instantiations with one-line comment each]
 
----
+  endmodule // end of module [module_name]
 
-STRUCTURE OF YOUR RESPONSE:
+VERILOG TESTBENCH — every testbench must follow this structure:
 
-## Introduction
-[2–3 sentences introducing the subject and what this assignment covers]
+  // ============================================================
+  // Module     : tb_[module_name]
+  // Student    : {{STUDENT_NAME}}
+  // Roll No.   : {{ROLL_NUMBER}}
+  // Batch      : {{BATCH}}
+  // Subject    : {{SUBJECT}}
+  // Description: Testbench for [module_name]. Tests all [N] input combinations.
+  // ============================================================
+  module tb_[module_name];
 
-**Question 1: [Title]**
-[Full detailed solution with proper formatting as described above]
+      // ── Inputs ─────────────────────────────────────────────
+      reg A;    // [description]
 
-**Question 2: [Title]**
-[Full detailed solution]
+      // ── Outputs ────────────────────────────────────────────
+      wire D;   // [description]
 
-... (continue for all questions found)
+      // ── UUT Instantiation ───────────────────────────────────
+      [module_name] uut ( .A(A), .D(D) );
 
-## Conclusion
-[2–3 sentences summarizing the key topics covered in this assignment]
+      // ── Test Vectors ────────────────────────────────────────
+      initial begin
+          $display("=== [Module Name] Testbench ===");
+          // [test cases with expected value comments]
+          $finish;
+      end
 
----
+      // ── Signal Monitor ──────────────────────────────────────
+      initial begin
+          $monitor("[format string]", $time, [signals]);
+      end
 
-IMPORTANT RULES:
-- Do NOT skip any question found in the assignment
-- Do NOT use LaTeX formatting (no $...$ or frac{}{})
-- Write all math in plain readable text
-- Be thorough and academically correct
-- If a question is unclear, state your assumption clearly before solving
-- Always use {{STUDENT_NAME}}'s name in ALL Verilog code comments — never leave it generic`;
+  endmodule // end of module tb_[module_name]
+
+SIMULATION WAVEFORM TABLE — after every testbench, include:
+  | Time (ns) | A | B | [inputs] | D | [outputs] | Expected |
+  |-----------|---|---|----------|---|-----------|----------|
+  | [values for every test case] |
+  Then one line: "Output matches truth table — design verified. ✓"
+
+═══════════════════════════════════════════════
+NAND GATE IMPLEMENTATION RULES (IMPORTANT)
+═══════════════════════════════════════════════
+
+When implementing circuits using only NAND gates:
+
+1. First write the standard Boolean expressions (already known)
+2. Apply De Morgan's theorem ONCE to convert to NAND form, step by step
+3. Draw a clear gate-level diagram description (numbered gates, labeled wires)
+4. Then write the Verilog code using the EXACT structure above
+5. Use DESCRIPTIVE wire names:
+   ✓ nand_ab, not_a, xor_ab_intermediate, borrow_term1
+   ✗ w1, w2, w3, w4, w5
+
+Standard NAND equivalents (use these directly, do not re-derive them):
+  NOT A      →  nand(out, A, A)
+  A AND B    →  wire t; nand(t,A,B); nand(out,t,t)
+  A OR B     →  wire na,nb; nand(na,A,A); nand(nb,B,B); nand(out,na,nb)
+  A XOR B    →  wire t,ta,tb; nand(t,A,B); nand(ta,A,t); nand(tb,B,t); nand(out,ta,tb)
+
+═══════════════════════════════════════════════
+FINAL CHECKLIST (verify before writing output)
+═══════════════════════════════════════════════
+
+Before writing your response, confirm:
+  ☑ No reasoning leakage or self-corrections anywhere in the output
+  ☑ All wire declarations are at the TOP of every module
+  ☑ Every Verilog comment describes what the line DOES, not what you're "trying"
+  ☑ Boolean derivations shown cleanly, ONCE, no re-attempts
+  ☑ Student name {{STUDENT_NAME}} appears in every module header
+  ☑ All truth tables are complete with no rows missing
+  ☑ Simulation waveform table included after every testbench
+  ☑ No LaTeX, no dollar signs, no \\frac{} anywhere`;
 
         const finalPrompt = promptTemplate
-            .replace(/{{STUDENT_NAME}}/g, name)
-            .replace(/{{ROLL_NUMBER}}/g, rollNo)
-            .replace(/{{BATCH}}/g, batch);
+            .replace(/{{STUDENT_NAME}}/g, student.name)
+            .replace(/{{ROLL_NUMBER}}/g, student.roll)
+            .replace(/{{BATCH}}/g, student.batch)
+            .replace(/{{SUBJECT}}/g, student.subject)
+            .replace(/{{INSTITUTE}}/g, student.inst || '—')
+            .replace('{{ASSIGNMENT_TEXT}}', assignmentText.substring(0, 8000));
 
-        try {
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: [
-                    {
-                        role: "user",
-                        parts: [
-                            {
-                                inlineData: {
-                                    data: Buffer.from(fileBuffer).toString("base64"),
-                                    mimeType: file.type,
-                                }
-                            },
-                            {
-                                text: finalPrompt
-                            }
-                        ]
-                    }
-                ]
-            });
-            solution = response.text || "No solution generated.";
-        } catch (apiError) {
-            console.error("Gemini API Error:", apiError);
-            return NextResponse.json({ error: "Failed to generate solution from AI" }, { status: 500 });
-        }
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: finalPrompt
+        });
+
+        const solution = response.text || "No solution generated.";
 
         return NextResponse.json({
             success: true,
-            data: {
-                name,
-                rollNo,
-                batch,
-                solution: solution
-            }
+            solution: solution
         });
 
     } catch (error) {
