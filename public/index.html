@@ -1,467 +1,1014 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DigiSolve — Digital Design Assignment Helper</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quubit — Digital Design Assignment Helper</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
-    :root{--bg:#0b0d11;--sur:#13161d;--bdr:#222632;--gld:#c9922a;--glt:#e8b45a;--txt:#ede9e0;--mut:#7a7a8c;--grn:#2ec99a;--rad:14px}
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
-    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 10%,rgba(201,146,42,.07) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 80% 80%,rgba(46,201,154,.04) 0%,transparent 60%);pointer-events:none;z-index:0}
-    header{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:22px 48px;border-bottom:1px solid var(--bdr)}
-    .logo{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:700;color:var(--txt)}.logo span{color:var(--gld)}
-    .badge{background:rgba(201,146,42,.12);border:1px solid rgba(201,146,42,.3);color:var(--glt);padding:5px 14px;border-radius:100px;font-size:.75rem;font-weight:500;letter-spacing:.5px}
-    .hero{position:relative;z-index:1;text-align:center;padding:64px 24px 48px}
-    .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,4rem);font-weight:700;line-height:1.1;margin-bottom:16px}
-    .hero h1 em{color:var(--gld);font-style:normal}
-    .hero p{color:var(--mut);font-size:1.05rem;max-width:480px;margin:0 auto;line-height:1.65}
-    .swrap{display:flex;align-items:flex-start;justify-content:center;margin:48px 0;position:relative;z-index:1}
-    .si{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
-    .si:not(:last-child){margin-right:80px}
-    .si:not(:last-child)::after{content:'';position:absolute;top:17px;left:calc(50% + 18px);width:80px;height:1px;background:var(--bdr);transition:background .4s}
-    .si.done:not(:last-child)::after{background:var(--gld)}
-    .sdot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bdr);background:var(--sur);font-size:.82rem;font-weight:600;color:var(--mut);transition:all .35s}
-    .si.active .sdot{border-color:var(--gld);color:var(--gld);background:rgba(201,146,42,.1);box-shadow:0 0 0 4px rgba(201,146,42,.1)}
-    .si.done .sdot{border-color:var(--gld);background:var(--gld);color:#000}
-    .slbl{font-size:.72rem;color:var(--mut);white-space:nowrap;text-transform:uppercase;letter-spacing:.5px}
-    .si.active .slbl{color:var(--glt)}
-    .card{position:relative;z-index:1;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rad);padding:40px;max-width:600px;margin:0 auto 80px;box-shadow:0 24px 64px rgba(0,0,0,.4)}
-    .ct{font-family:'Cormorant Garamond',serif;font-size:1.65rem;font-weight:600;margin-bottom:6px}
-    .cs{color:var(--mut);font-size:.875rem;margin-bottom:32px;line-height:1.5}
-    .frow{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .fld{margin-bottom:20px}
-    .fld label{display:block;font-size:.78rem;font-weight:500;color:var(--mut);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
-    .fld input{width:100%;padding:13px 16px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:10px;color:var(--txt);font-family:'DM Sans',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s}
-    .fld input:focus{border-color:var(--gld);box-shadow:0 0 0 3px rgba(201,146,42,.12)}
-    .uz{border:2px dashed var(--bdr);border-radius:12px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .25s;position:relative}
-    .uz:hover,.uz.drag{border-color:var(--gld);background:rgba(201,146,42,.04)}
-    .uz input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-    .uic{width:56px;height:56px;background:rgba(201,146,42,.1);border:1px solid rgba(201,146,42,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.6rem}
-    .uz h3{font-size:1rem;font-weight:500;margin-bottom:6px}
-    .uz p{color:var(--mut);font-size:.85rem}
-    .ftag{display:flex;align-items:center;gap:12px;background:rgba(46,201,154,.08);border:1px solid rgba(46,201,154,.2);border-radius:10px;padding:14px 16px;margin-top:16px}
-    .pbox{background:rgba(255,255,255,.03);border:1px solid var(--bdr);border-radius:12px;padding:24px;margin-bottom:24px}
-    .pr{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
-    .pr+.pr{border-top:1px solid var(--bdr)}
-    .pr.tot{font-weight:600;color:var(--glt)}
+    :root {
+      --bg: #0b0d11;
+      --sur: #13161d;
+      --bdr: #222632;
+      --gld: #c9922a;
+      --glt: #e8b45a;
+      --txt: #ede9e0;
+      --mut: #7a7a8c;
+      --grn: #2ec99a;
+      --rad: 14px
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--txt);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 20% 10%, rgba(201, 146, 42, .07) 0%, transparent 60%), radial-gradient(ellipse 40% 60% at 80% 80%, rgba(46, 201, 154, .04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0
+    }
+
+    header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 48px;
+      border-bottom: 1px solid var(--bdr)
+    }
+
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--txt)
+    }
+
+    .logo span {
+      color: var(--gld)
+    }
+
+    .badge {
+      background: rgba(201, 146, 42, .12);
+      border: 1px solid rgba(201, 146, 42, .3);
+      color: var(--glt);
+      padding: 5px 14px;
+      border-radius: 100px;
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: .5px
+    }
+
+    .hero {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 64px 24px 48px
+    }
+
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 16px
+    }
+
+    .hero h1 em {
+      color: var(--gld);
+      font-style: normal
+    }
+
+    .hero p {
+      color: var(--mut);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.65
+    }
+
+    .swrap {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      margin: 48px 0;
+      position: relative;
+      z-index: 1
+    }
+
+    .si {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative
+    }
+
+    .si:not(:last-child) {
+      margin-right: 80px
+    }
+
+    .si:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 17px;
+      left: calc(50% + 18px);
+      width: 80px;
+      height: 1px;
+      background: var(--bdr);
+      transition: background .4s
+    }
+
+    .si.done:not(:last-child)::after {
+      background: var(--gld)
+    }
+
+    .sdot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--bdr);
+      background: var(--sur);
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--mut);
+      transition: all .35s
+    }
+
+    .si.active .sdot {
+      border-color: var(--gld);
+      color: var(--gld);
+      background: rgba(201, 146, 42, .1);
+      box-shadow: 0 0 0 4px rgba(201, 146, 42, .1)
+    }
+
+    .si.done .sdot {
+      border-color: var(--gld);
+      background: var(--gld);
+      color: #000
+    }
+
+    .slbl {
+      font-size: .72rem;
+      color: var(--mut);
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: .5px
+    }
+
+    .si.active .slbl {
+      color: var(--glt)
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      background: var(--sur);
+      border: 1px solid var(--bdr);
+      border-radius: var(--rad);
+      padding: 40px;
+      max-width: 600px;
+      margin: 0 auto 80px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, .4)
+    }
+
+    .ct {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.65rem;
+      font-weight: 600;
+      margin-bottom: 6px
+    }
+
+    .cs {
+      color: var(--mut);
+      font-size: .875rem;
+      margin-bottom: 32px;
+      line-height: 1.5
+    }
+
+    .frow {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px
+    }
+
+    .fld {
+      margin-bottom: 20px
+    }
+
+    .fld label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 500;
+      color: var(--mut);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: .5px
+    }
+
+    .fld input {
+      width: 100%;
+      padding: 13px 16px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid var(--bdr);
+      border-radius: 10px;
+      color: var(--txt);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s
+    }
+
+    .fld input:focus {
+      border-color: var(--gld);
+      box-shadow: 0 0 0 3px rgba(201, 146, 42, .12)
+    }
+
+    .uz {
+      border: 2px dashed var(--bdr);
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s;
+      position: relative
+    }
+
+    .uz:hover,
+    .uz.drag {
+      border-color: var(--gld);
+      background: rgba(201, 146, 42, .04)
+    }
+
+    .uz input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%
+    }
+
+    .uic {
+      width: 56px;
+      height: 56px;
+      background: rgba(201, 146, 42, .1);
+      border: 1px solid rgba(201, 146, 42, .2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 1.6rem
+    }
+
+    .uz h3 {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 6px
+    }
+
+    .uz p {
+      color: var(--mut);
+      font-size: .85rem
+    }
+
+    .ftag {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(46, 201, 154, .08);
+      border: 1px solid rgba(46, 201, 154, .2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 16px
+    }
+
+    .pbox {
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid var(--bdr);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px
+    }
+
+    .pr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0
+    }
+
+    .pr+.pr {
+      border-top: 1px solid var(--bdr)
+    }
+
+    .pr.tot {
+      font-weight: 600;
+      color: var(--glt)
+    }
+
     /* theme preview chips */
-    .theme-preview{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
-    .tchip{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.2);cursor:default;position:relative}
-    .tchip::after{content:attr(data-name);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1d26;color:var(--txt);font-size:.7rem;padding:3px 8px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
-    .tchip:hover::after{opacity:1}
-    .tlabel{font-size:.78rem;color:var(--mut);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
-    .btn{width:100%;padding:15px;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
-    .bg{background:linear-gradient(135deg,#c9922a,#a87020);color:#fff;box-shadow:0 4px 20px rgba(201,146,42,.3)}
-    .bg:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(201,146,42,.4)}
-    .bgh{background:transparent;border:1px solid var(--bdr);color:var(--mut);margin-top:10px}
-    .bgh:hover{border-color:var(--mut);color:var(--txt)}
-    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
-    .bgr{background:linear-gradient(135deg,#2ec99a,#1a9b74);color:#fff;box-shadow:0 4px 20px rgba(46,201,154,.25);margin-top:24px}
-    .bgr:hover{transform:translateY(-1px)}
-    #step-processing{text-align:center;padding:20px 0}
-    .spin{width:64px;height:64px;margin:0 auto 24px;border:3px solid var(--bdr);border-top-color:var(--gld);border-radius:50%;animation:sp .8s linear infinite}
-    @keyframes sp{to{transform:rotate(360deg)}}
-    .pss{margin:32px 0}
-    .ps{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--bdr);font-size:.9rem;color:var(--mut);transition:color .3s}
-    .ps.on{color:var(--txt)}.ps.ok{color:var(--grn)}
-    #step-done{text-align:center}
-    .okr{width:80px;height:80px;margin:0 auto 24px;border-radius:50%;background:rgba(46,201,154,.1);border:2px solid rgba(46,201,154,.3);display:flex;align-items:center;justify-content:center;font-size:2.2rem;animation:pp .4s cubic-bezier(.34,1.56,.64,1)}
-    @keyframes pp{from{transform:scale(0)}to{transform:scale(1)}}
-    .theme-reveal{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;align-items:center;gap:14px}
-    .tr-dot{width:32px;height:32px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.2)}
-    .tr-info{text-align:left}
-    .tr-name{font-weight:600;font-size:.95rem}
-    .tr-sub{font-size:.8rem;color:var(--mut)}
-    .al{padding:12px 16px;border-radius:10px;font-size:.875rem;margin-bottom:16px;display:none}
-    .ae{background:rgba(224,90,90,.1);border:1px solid rgba(224,90,90,.3);color:#e88}
-    .ai{background:rgba(201,146,42,.1);border:1px solid rgba(201,146,42,.3);color:var(--glt);display:block}
-    .sp{display:none}.sp.active{display:block}
-    footer{position:relative;z-index:1;text-align:center;padding:32px;color:var(--mut);font-size:.8rem;border-top:1px solid var(--bdr)}
-    footer a{color:var(--gld);text-decoration:none}
-    @media(max-width:580px){header{padding:16px 20px}.card{padding:24px 20px;margin:0 16px 60px}.frow{grid-template-columns:1fr}.si:not(:last-child){margin-right:32px}.si:not(:last-child)::after{width:32px}}
+    .theme-preview {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap
+    }
+
+    .tchip {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, .2);
+      cursor: default;
+      position: relative
+    }
+
+    .tchip::after {
+      content: attr(data-name);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1d26;
+      color: var(--txt);
+      font-size: .7rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s
+    }
+
+    .tchip:hover::after {
+      opacity: 1
+    }
+
+    .tlabel {
+      font-size: .78rem;
+      color: var(--mut);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: .5px
+    }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px
+    }
+
+    .bg {
+      background: linear-gradient(135deg, #c9922a, #a87020);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(201, 146, 42, .3)
+    }
+
+    .bg:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(201, 146, 42, .4)
+    }
+
+    .bgh {
+      background: transparent;
+      border: 1px solid var(--bdr);
+      color: var(--mut);
+      margin-top: 10px
+    }
+
+    .bgh:hover {
+      border-color: var(--mut);
+      color: var(--txt)
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none !important
+    }
+
+    .bgr {
+      background: linear-gradient(135deg, #2ec99a, #1a9b74);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(46, 201, 154, .25);
+      margin-top: 24px
+    }
+
+    .bgr:hover {
+      transform: translateY(-1px)
+    }
+
+    #step-processing {
+      text-align: center;
+      padding: 20px 0
+    }
+
+    .spin {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 24px;
+      border: 3px solid var(--bdr);
+      border-top-color: var(--gld);
+      border-radius: 50%;
+      animation: sp .8s linear infinite
+    }
+
+    @keyframes sp {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .pss {
+      margin: 32px 0
+    }
+
+    .ps {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--bdr);
+      font-size: .9rem;
+      color: var(--mut);
+      transition: color .3s
+    }
+
+    .ps.on {
+      color: var(--txt)
+    }
+
+    .ps.ok {
+      color: var(--grn)
+    }
+
+    #step-done {
+      text-align: center
+    }
+
+    .okr {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      background: rgba(46, 201, 154, .1);
+      border: 2px solid rgba(46, 201, 154, .3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      animation: pp .4s cubic-bezier(.34, 1.56, .64, 1)
+    }
+
+    @keyframes pp {
+      from {
+        transform: scale(0)
+      }
+
+      to {
+        transform: scale(1)
+      }
+    }
+
+    .theme-reveal {
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid var(--bdr);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    .tr-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid rgba(255, 255, 255, .2)
+    }
+
+    .tr-info {
+      text-align: left
+    }
+
+    .tr-name {
+      font-weight: 600;
+      font-size: .95rem
+    }
+
+    .tr-sub {
+      font-size: .8rem;
+      color: var(--mut)
+    }
+
+    .al {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: .875rem;
+      margin-bottom: 16px;
+      display: none
+    }
+
+    .ae {
+      background: rgba(224, 90, 90, .1);
+      border: 1px solid rgba(224, 90, 90, .3);
+      color: #e88
+    }
+
+    .ai {
+      background: rgba(201, 146, 42, .1);
+      border: 1px solid rgba(201, 146, 42, .3);
+      color: var(--glt);
+      display: block
+    }
+
+    .sp {
+      display: none
+    }
+
+    .sp.active {
+      display: block
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 32px;
+      color: var(--mut);
+      font-size: .8rem;
+      border-top: 1px solid var(--bdr)
+    }
+
+    footer a {
+      color: var(--gld);
+      text-decoration: none
+    }
+
+    @media(max-width:580px) {
+      header {
+        padding: 16px 20px
+      }
+
+      .card {
+        padding: 24px 20px;
+        margin: 0 16px 60px
+      }
+
+      .frow {
+        grid-template-columns: 1fr
+      }
+
+      .si:not(:last-child) {
+        margin-right: 32px
+      }
+
+      .si:not(:last-child)::after {
+        width: 32px
+      }
+    }
   </style>
 </head>
+
 <body>
-<header>
-  <div class="logo">Digi<span>Solve</span></div>
-  <div class="badge">✦ Powered by Claude AI</div>
-</header>
-<section class="hero">
-  <h1>Solve Your <em>Digital Design</em><br/>Assignment Instantly</h1>
-  <p>Upload your assignment PDF, pay just ₹10, and get a complete formatted solution with your student details in under a minute.</p>
-</section>
-<div class="swrap">
-  <div class="si active" id="si-1"><div class="sdot">1</div><div class="slbl">Your Info</div></div>
-  <div class="si" id="si-2"><div class="sdot">2</div><div class="slbl">Upload</div></div>
-  <div class="si" id="si-3"><div class="sdot">3</div><div class="slbl">Pay ₹10</div></div>
-  <div class="si" id="si-4"><div class="sdot">✓</div><div class="slbl">Download</div></div>
-</div>
-<div class="card">
-
-  <!-- STEP 1 -->
-  <div class="sp active" id="step-1">
-    <div class="ct">Student Details</div>
-    <div class="cs">These appear on the cover page of your solution PDF.</div>
-    <div id="e1" class="al ae"></div>
-    <div class="frow">
-      <div class="fld"><label>Full Name</label><input type="text" id="sn" placeholder="Aryan Mehta"/></div>
-      <div class="fld"><label>Roll Number</label><input type="text" id="sr" placeholder="22CS045"/></div>
+  <header>
+    <div class="logo">Digi<span>Solve</span></div>
+    <div class="badge">✦ Powered by Claude AI</div>
+  </header>
+  <section class="hero">
+    <h1>Solve Your <em>Digital Design</em><br />Assignment Instantly</h1>
+    <p>Upload your assignment PDF, pay just ₹10, and get a complete formatted solution with your student details in
+      under a minute.</p>
+  </section>
+  <div class="swrap">
+    <div class="si active" id="si-1">
+      <div class="sdot">1</div>
+      <div class="slbl">Your Info</div>
     </div>
-    <div class="frow">
-      <div class="fld"><label>Batch / Section</label><input type="text" id="sb" placeholder="B-2, 2022–26"/></div>
-      <div class="fld"><label>Subject</label><input type="text" id="ss" placeholder="Digital Design (EC301)"/></div>
+    <div class="si" id="si-2">
+      <div class="sdot">2</div>
+      <div class="slbl">Upload</div>
     </div>
-    <div class="fld"><label>Institute Name</label><input type="text" id="sinst" placeholder="ABC Engineering College"/></div>
-
-    <!-- Theme preview -->
-    <div class="tlabel">Your PDF theme will be randomly assigned</div>
-    <div class="theme-preview">
-      <div class="tchip" data-name="Classic Navy"    style="background:linear-gradient(135deg,#0a1232,#d4af37)"></div>
-      <div class="tchip" data-name="Forest Green"   style="background:linear-gradient(135deg,#0c1e14,#50b478)"></div>
-      <div class="tchip" data-name="Maroon Univ."   style="background:linear-gradient(135deg,#26080e,#c3a064)"></div>
-      <div class="tchip" data-name="Slate Tech"     style="background:linear-gradient(135deg,#16181e,#eb6e28)"></div>
-      <div class="tchip" data-name="Purple Elegant" style="background:linear-gradient(135deg,#120826,#be9beb)"></div>
-      <div class="tchip" data-name="Teal Modern"    style="background:linear-gradient(135deg,#082026,#20b9be)"></div>
+    <div class="si" id="si-3">
+      <div class="sdot">3</div>
+      <div class="slbl">Pay ₹10</div>
     </div>
-
-    <button class="btn bg" onclick="g2()">Continue to Upload →</button>
+    <div class="si" id="si-4">
+      <div class="sdot">✓</div>
+      <div class="slbl">Download</div>
+    </div>
   </div>
+  <div class="card">
 
-  <!-- STEP 2 -->
-  <div class="sp" id="step-2">
-    <div class="ct">Upload Assignment</div>
-    <div class="cs">Upload your Digital Design assignment as a PDF. Questions are extracted automatically.</div>
-    <div id="e2" class="al ae"></div>
-    <div class="uz" id="dz">
-      <input type="file" id="fi" accept=".pdf" onchange="hf(this)"/>
-      <div class="uic">📄</div>
-      <h3>Drop your PDF here</h3>
-      <p>or click to browse &nbsp;·&nbsp; Max 10 MB</p>
+    <!-- STEP 1 -->
+    <div class="sp active" id="step-1">
+      <div class="ct">Student Details</div>
+      <div class="cs">These appear on the cover page of your solution PDF.</div>
+      <div id="e1" class="al ae"></div>
+      <div class="frow">
+        <div class="fld"><label>Full Name</label><input type="text" id="sn" placeholder="Aryan Mehta" /></div>
+        <div class="fld"><label>Roll Number</label><input type="text" id="sr" placeholder="22CS045" /></div>
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Batch / Section</label><input type="text" id="sb" placeholder="B-2, 2022–26" /></div>
+        <div class="fld"><label>Subject</label><input type="text" id="ss" placeholder="Digital Design (EC301)" /></div>
+      </div>
+      <div class="fld"><label>Institute Name</label><input type="text" id="sinst"
+          placeholder="ABC Engineering College" /></div>
+
+      <!-- Theme preview -->
+      <div class="tlabel">Your PDF theme will be randomly assigned</div>
+      <div class="theme-preview">
+        <div class="tchip" data-name="Classic Navy" style="background:linear-gradient(135deg,#0a1232,#d4af37)"></div>
+        <div class="tchip" data-name="Forest Green" style="background:linear-gradient(135deg,#0c1e14,#50b478)"></div>
+        <div class="tchip" data-name="Maroon Univ." style="background:linear-gradient(135deg,#26080e,#c3a064)"></div>
+        <div class="tchip" data-name="Slate Tech" style="background:linear-gradient(135deg,#16181e,#eb6e28)"></div>
+        <div class="tchip" data-name="Purple Elegant" style="background:linear-gradient(135deg,#120826,#be9beb)"></div>
+        <div class="tchip" data-name="Teal Modern" style="background:linear-gradient(135deg,#082026,#20b9be)"></div>
+      </div>
+
+      <button class="btn bg" onclick="g2()">Continue to Upload →</button>
     </div>
-    <div id="finfo" style="display:none">
-      <div class="ftag">
-        <span>✅</span>
-        <div><div style="font-size:.9rem" id="fn"></div><div style="font-size:.8rem;color:var(--mut)" id="fs"></div></div>
+
+    <!-- STEP 2 -->
+    <div class="sp" id="step-2">
+      <div class="ct">Upload Assignment</div>
+      <div class="cs">Upload your Digital Design assignment as a PDF. Questions are extracted automatically.</div>
+      <div id="e2" class="al ae"></div>
+      <div class="uz" id="dz">
+        <input type="file" id="fi" accept=".pdf" onchange="hf(this)" />
+        <div class="uic">📄</div>
+        <h3>Drop your PDF here</h3>
+        <p>or click to browse &nbsp;·&nbsp; Max 10 MB</p>
+      </div>
+      <div id="finfo" style="display:none">
+        <div class="ftag">
+          <span>✅</span>
+          <div>
+            <div style="font-size:.9rem" id="fn"></div>
+            <div style="font-size:.8rem;color:var(--mut)" id="fs"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn bg" onclick="g3()" style="margin-top:24px">Continue to Payment →</button>
+      <button class="btn bgh" onclick="gs(1)">← Back</button>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="sp" id="step-3">
+      <div class="ct">Pay &amp; Solve</div>
+      <div class="cs">One-time payment of ₹10 per assignment solution.</div>
+      <div id="e3" class="al ae"></div>
+      <div class="al ai">⚡ Your AI-powered solution will be ready within 30–60 seconds after payment.</div>
+      <div class="pbox">
+        <div class="pr"><span>Student</span><span id="pn">—</span></div>
+        <div class="pr"><span>Roll No.</span><span id="prn">—</span></div>
+        <div class="pr"><span>File</span><span id="pf">—</span></div>
+        <div class="pr tot"><span>Total</span><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">₹
+            10.00</span></div>
+      </div>
+      <button class="btn bg" id="payBtn" onclick="pay()">🔒 Pay ₹10 &amp; Get Solution</button>
+      <button class="btn bgh" onclick="gs(2)">← Back</button>
+    </div>
+
+    <!-- PROCESSING -->
+    <div class="sp" id="step-processing">
+      <div class="spin"></div>
+      <div class="ct" style="text-align:center;margin-bottom:6px">Solving Assignment…</div>
+      <div class="cs" style="text-align:center">Please wait, don't close this tab.</div>
+      <div class="pss">
+        <div class="ps" id="ps1">📖 &nbsp; Reading your PDF</div>
+        <div class="ps" id="ps2">🤖 &nbsp; AI analyzing questions</div>
+        <div class="ps" id="ps3">✍️ &nbsp; Writing detailed solutions</div>
+        <div class="ps" id="ps4">🎨 &nbsp; Applying your unique theme &amp; building PDF</div>
       </div>
     </div>
-    <button class="btn bg" onclick="g3()" style="margin-top:24px">Continue to Payment →</button>
-    <button class="btn bgh" onclick="gs(1)">← Back</button>
-  </div>
 
-  <!-- STEP 3 -->
-  <div class="sp" id="step-3">
-    <div class="ct">Pay &amp; Solve</div>
-    <div class="cs">One-time payment of ₹10 per assignment solution.</div>
-    <div id="e3" class="al ae"></div>
-    <div class="al ai">⚡ Your AI-powered solution will be ready within 30–60 seconds after payment.</div>
-    <div class="pbox">
-      <div class="pr"><span>Student</span><span id="pn">—</span></div>
-      <div class="pr"><span>Roll No.</span><span id="prn">—</span></div>
-      <div class="pr"><span>File</span><span id="pf">—</span></div>
-      <div class="pr tot"><span>Total</span><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">₹ 10.00</span></div>
-    </div>
-    <button class="btn bg" id="payBtn" onclick="pay()">🔒 Pay ₹10 &amp; Get Solution</button>
-    <button class="btn bgh" onclick="gs(2)">← Back</button>
-  </div>
-
-  <!-- PROCESSING -->
-  <div class="sp" id="step-processing">
-    <div class="spin"></div>
-    <div class="ct" style="text-align:center;margin-bottom:6px">Solving Assignment…</div>
-    <div class="cs" style="text-align:center">Please wait, don't close this tab.</div>
-    <div class="pss">
-      <div class="ps" id="ps1">📖 &nbsp; Reading your PDF</div>
-      <div class="ps" id="ps2">🤖 &nbsp; AI analyzing questions</div>
-      <div class="ps" id="ps3">✍️ &nbsp; Writing detailed solutions</div>
-      <div class="ps" id="ps4">🎨 &nbsp; Applying your unique theme &amp; building PDF</div>
-    </div>
-  </div>
-
-  <!-- DONE -->
-  <div class="sp" id="step-done">
-    <div class="okr">✅</div>
-    <div class="ct">Solution Ready!</div>
-    <div class="cs" style="margin-bottom:8px">Your assignment solution is ready with your unique theme.</div>
-    <!-- Theme reveal shown after generation -->
-    <div class="theme-reveal" id="theme-reveal">
-      <div class="tr-dot" id="tr-dot"></div>
-      <div class="tr-info">
-        <div class="tr-name" id="tr-name">—</div>
-        <div class="tr-sub">Your unique PDF theme</div>
+    <!-- DONE -->
+    <div class="sp" id="step-done">
+      <div class="okr">✅</div>
+      <div class="ct">Solution Ready!</div>
+      <div class="cs" style="margin-bottom:8px">Your assignment solution is ready with your unique theme.</div>
+      <!-- Theme reveal shown after generation -->
+      <div class="theme-reveal" id="theme-reveal">
+        <div class="tr-dot" id="tr-dot"></div>
+        <div class="tr-info">
+          <div class="tr-name" id="tr-name">—</div>
+          <div class="tr-sub">Your unique PDF theme</div>
+        </div>
       </div>
+      <button class="btn bgr" onclick="dl()">⬇ Download Assignment PDF</button>
+      <button class="btn bgh" onclick="rst()">Solve Another →</button>
     </div>
-    <button class="btn bgr" onclick="dl()">⬇ Download Assignment PDF</button>
-    <button class="btn bgh" onclick="rst()">Solve Another →</button>
-  </div>
 
-</div><!-- /card -->
+  </div><!-- /card -->
 
-<footer>
-  DigiSolve &nbsp;·&nbsp; Powered by <a href="https://anthropic.com" target="_blank">Claude AI</a> &nbsp;·&nbsp; Payments by <a href="https://razorpay.com" target="_blank">Razorpay</a><br/><br/>
-  <small>For reference and study purposes only. Always understand what you submit.</small>
-</footer>
+  <footer>
+    Quubit &nbsp;·&nbsp; Powered by <a href="https://anthropic.com" target="_blank">Claude AI</a> &nbsp;·&nbsp; Payments
+    by <a href="https://razorpay.com" target="_blank">Razorpay</a><br /><br />
+    <small>For reference and study purposes only. Always understand what you submit.</small>
+  </footer>
 
-<script>
-/* ═══════════════════════════════════════
-   CONFIG
-═══════════════════════════════════════ */
-const RK = 'rzp_live_SMrFP7iMMZCvt5';
+  <script>
+    /* ═══════════════════════════════════════
+       CONFIG
+    ═══════════════════════════════════════ */
+    const RK = 'rzp_live_SMrFP7iMMZCvt5';
 
-/* ── State ── */
-let SD={}, PF=null, PT='', PB=null, CHOSEN_THEME=null;
+    /* ── State ── */
+    let SD = {}, PF = null, PT = '', PB = null, CHOSEN_THEME = null;
 
-/* ═══════════════════════════════════════
-   6 DISTINCT THEMES
-   Picked randomly per user at build time
-═══════════════════════════════════════ */
-const THEMES = [
-  {
-    name:'Classic Navy',
-    dot:'linear-gradient(135deg,#0a1232,#d4af37)',
-    C:{bg:[10,18,45],bar:[212,175,55],title:[230,225,210],accent:[212,175,55],lbl:[130,140,165],val:[210,215,225],foot:[55,62,90]},
-    P:{bg:[248,249,252],hBg:[10,18,45],hTxt:[255,255,255],sBg:[232,236,248],sTxt:[20,35,90],body:[30,35,55],bullet:[40,45,70],bold:[10,18,45],fTxt:[150,155,175],div:[10,18,45]}
-  },
-  {
-    name:'Forest Green',
-    dot:'linear-gradient(135deg,#0c1e14,#50b478)',
-    C:{bg:[12,30,20],bar:[80,180,120],title:[225,240,230],accent:[80,200,130],lbl:[100,140,115],val:[200,225,210],foot:[50,80,60]},
-    P:{bg:[247,251,248],hBg:[18,70,40],hTxt:[220,245,230],sBg:[220,240,228],sTxt:[15,70,40],body:[30,50,38],bullet:[35,60,45],bold:[12,55,30],fTxt:[120,160,135],div:[18,70,40]}
-  },
-  {
-    name:'Maroon University',
-    dot:'linear-gradient(135deg,#26080e,#c3a064)',
-    C:{bg:[38,8,14],bar:[195,160,100],title:[245,235,215],accent:[210,170,100],lbl:[150,110,110],val:[235,220,200],foot:[90,40,50]},
-    P:{bg:[253,250,245],hBg:[120,20,35],hTxt:[255,245,230],sBg:[248,235,228],sTxt:[100,15,25],body:[45,25,28],bullet:[55,30,32],bold:[100,15,25],fTxt:[175,140,140],div:[120,20,35]}
-  },
-  {
-    name:'Slate Tech',
-    dot:'linear-gradient(135deg,#16181e,#eb6e28)',
-    C:{bg:[22,24,30],bar:[235,110,40],title:[235,235,240],accent:[235,110,40],lbl:[115,120,140],val:[210,215,225],foot:[60,63,78]},
-    P:{bg:[248,248,250],hBg:[38,42,55],hTxt:[240,240,245],sBg:[240,235,225],sTxt:[160,75,20],body:[38,40,52],bullet:[45,47,60],bold:[22,24,40],fTxt:[155,158,175],div:[38,42,55]}
-  },
-  {
-    name:'Purple Elegant',
-    dot:'linear-gradient(135deg,#120826,#be9beb)',
-    C:{bg:[18,8,38],bar:[180,160,220],title:[235,230,248],accent:[190,155,235],lbl:[130,110,165],val:[220,215,238],foot:[65,48,95]},
-    P:{bg:[250,248,255],hBg:[55,25,110],hTxt:[240,235,255],sBg:[238,230,255],sTxt:[60,20,120],body:[35,25,58],bullet:[45,32,70],bold:[45,18,95],fTxt:[165,150,195],div:[55,25,110]}
-  },
-  {
-    name:'Teal Modern',
-    dot:'linear-gradient(135deg,#082026,#20b9be)',
-    C:{bg:[8,32,38],bar:[32,185,190],title:[225,242,244],accent:[40,195,200],lbl:[85,135,140],val:[200,228,232],foot:[35,78,85]},
-    P:{bg:[246,252,253],hBg:[10,90,100],hTxt:[220,248,250],sBg:[215,242,244],sTxt:[8,80,90],body:[25,50,55],bullet:[30,58,62],bold:[8,65,75],fTxt:[120,170,175],div:[10,90,100]}
-  }
-];
+    /* ═══════════════════════════════════════
+       6 DISTINCT THEMES
+       Picked randomly per user at build time
+    ═══════════════════════════════════════ */
+    const THEMES = [
+      {
+        name: 'Classic Navy',
+        dot: 'linear-gradient(135deg,#0a1232,#d4af37)',
+        C: { bg: [10, 18, 45], bar: [212, 175, 55], title: [230, 225, 210], accent: [212, 175, 55], lbl: [130, 140, 165], val: [210, 215, 225], foot: [55, 62, 90] },
+        P: { bg: [248, 249, 252], hBg: [10, 18, 45], hTxt: [255, 255, 255], sBg: [232, 236, 248], sTxt: [20, 35, 90], body: [30, 35, 55], bullet: [40, 45, 70], bold: [10, 18, 45], fTxt: [150, 155, 175], div: [10, 18, 45] }
+      },
+      {
+        name: 'Forest Green',
+        dot: 'linear-gradient(135deg,#0c1e14,#50b478)',
+        C: { bg: [12, 30, 20], bar: [80, 180, 120], title: [225, 240, 230], accent: [80, 200, 130], lbl: [100, 140, 115], val: [200, 225, 210], foot: [50, 80, 60] },
+        P: { bg: [247, 251, 248], hBg: [18, 70, 40], hTxt: [220, 245, 230], sBg: [220, 240, 228], sTxt: [15, 70, 40], body: [30, 50, 38], bullet: [35, 60, 45], bold: [12, 55, 30], fTxt: [120, 160, 135], div: [18, 70, 40] }
+      },
+      {
+        name: 'Maroon University',
+        dot: 'linear-gradient(135deg,#26080e,#c3a064)',
+        C: { bg: [38, 8, 14], bar: [195, 160, 100], title: [245, 235, 215], accent: [210, 170, 100], lbl: [150, 110, 110], val: [235, 220, 200], foot: [90, 40, 50] },
+        P: { bg: [253, 250, 245], hBg: [120, 20, 35], hTxt: [255, 245, 230], sBg: [248, 235, 228], sTxt: [100, 15, 25], body: [45, 25, 28], bullet: [55, 30, 32], bold: [100, 15, 25], fTxt: [175, 140, 140], div: [120, 20, 35] }
+      },
+      {
+        name: 'Slate Tech',
+        dot: 'linear-gradient(135deg,#16181e,#eb6e28)',
+        C: { bg: [22, 24, 30], bar: [235, 110, 40], title: [235, 235, 240], accent: [235, 110, 40], lbl: [115, 120, 140], val: [210, 215, 225], foot: [60, 63, 78] },
+        P: { bg: [248, 248, 250], hBg: [38, 42, 55], hTxt: [240, 240, 245], sBg: [240, 235, 225], sTxt: [160, 75, 20], body: [38, 40, 52], bullet: [45, 47, 60], bold: [22, 24, 40], fTxt: [155, 158, 175], div: [38, 42, 55] }
+      },
+      {
+        name: 'Purple Elegant',
+        dot: 'linear-gradient(135deg,#120826,#be9beb)',
+        C: { bg: [18, 8, 38], bar: [180, 160, 220], title: [235, 230, 248], accent: [190, 155, 235], lbl: [130, 110, 165], val: [220, 215, 238], foot: [65, 48, 95] },
+        P: { bg: [250, 248, 255], hBg: [55, 25, 110], hTxt: [240, 235, 255], sBg: [238, 230, 255], sTxt: [60, 20, 120], body: [35, 25, 58], bullet: [45, 32, 70], bold: [45, 18, 95], fTxt: [165, 150, 195], div: [55, 25, 110] }
+      },
+      {
+        name: 'Teal Modern',
+        dot: 'linear-gradient(135deg,#082026,#20b9be)',
+        C: { bg: [8, 32, 38], bar: [32, 185, 190], title: [225, 242, 244], accent: [40, 195, 200], lbl: [85, 135, 140], val: [200, 228, 232], foot: [35, 78, 85] },
+        P: { bg: [246, 252, 253], hBg: [10, 90, 100], hTxt: [220, 248, 250], sBg: [215, 242, 244], sTxt: [8, 80, 90], body: [25, 50, 55], bullet: [30, 58, 62], bold: [8, 65, 75], fTxt: [120, 170, 175], div: [10, 90, 100] }
+      }
+    ];
 
-/* ── Drag-drop ── */
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-const dz=document.getElementById('dz');
-dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
-dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
-dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf')sf(f)});
-function hf(i){if(i.files[0])sf(i.files[0])}
-function sf(f){
-  if(f.size>10*1024*1024){err(2,'File too large. Max 10 MB.');return}
-  PF=f;document.getElementById('fn').textContent=f.name;
-  document.getElementById('fs').textContent=(f.size/1024).toFixed(1)+' KB';
-  document.getElementById('finfo').style.display='block';
-}
-
-/* ── Steps ── */
-function gs(n){
-  document.querySelectorAll('.sp').forEach(p=>p.classList.remove('active'));
-  document.getElementById('step-'+n).classList.add('active');
-  if(typeof n==='number')[1,2,3,4].forEach(i=>{document.getElementById('si-'+i).classList.toggle('active',i===n);document.getElementById('si-'+i).classList.toggle('done',i<n)});
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function err(s,m){const e=document.getElementById('e'+s);e.textContent='⚠ '+m;e.style.display='block';setTimeout(()=>e.style.display='none',4000)}
-function g2(){
-  const n=document.getElementById('sn').value.trim(),r=document.getElementById('sr').value.trim(),b=document.getElementById('sb').value.trim(),s=document.getElementById('ss').value.trim(),ins=document.getElementById('sinst').value.trim();
-  if(!n||!r||!b||!s){err(1,'Please fill all required fields.');return}
-  SD={name:n,roll:r,batch:b,subject:s,inst:ins};gs(2);
-}
-function g3(){
-  if(!PF){err(2,'Please upload your assignment PDF first.');return}
-  document.getElementById('pn').textContent=SD.name;
-  document.getElementById('prn').textContent=SD.roll;
-  document.getElementById('pf').textContent=PF.name;
-  gs(3);
-}
-
-/* ── Payment ── */
-function pay(){
-  if(RK==='YOUR_RAZORPAY_KEY_ID'){
-    if(!confirm('DEV MODE: No Razorpay key. Proceed without payment for testing?'))return;
-    solve();return;
-  }
-  document.getElementById('payBtn').disabled=true;
-  const opts={key:RK,amount:1000,currency:'INR',name:'DigiSolve',description:SD.subject+' Solution',
-    handler:()=>solve(),prefill:{name:SD.name},theme:{color:'#c9922a'},
-    modal:{ondismiss:()=>document.getElementById('payBtn').disabled=false}};
-  const rzp=new Razorpay(opts);
-  rzp.on('payment.failed',()=>{err(3,'Payment failed. Please try again.');document.getElementById('payBtn').disabled=false});
-  rzp.open();
-}
-
-/* ── Extract PDF ── */
-async function xt(file){
-  const ab=await file.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:ab}).promise;
-  let t='';for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const c=await pg.getTextContent();t+=c.items.map(s=>s.str).join(' ')+'\n\n';}
-  return t.trim();
-}
-
-/* ── Process step highlight ── */
-function ap(i){[1,2,3,4].forEach((n,idx)=>{const el=document.getElementById('ps'+n);el.className='ps'+(idx<i?' ok':idx===i?' on':'');})}
-
-/* ── Main solve ── */
-async function solve(){
-  document.querySelectorAll('.sp').forEach(p=>p.classList.remove('active'));
-  document.getElementById('step-processing').classList.add('active');
-  try{
-    ap(0);PT=await xt(PF);
-    ap(1);
-    const res=await fetch('/api/solve',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({student:SD,assignmentText:PT.substring(0,8000)})});
-    if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.error||'Server error')}
-    ap(2);const {solution}=await res.json();
-    ap(3);
-
-    // Pick random theme HERE — locked in for this student's PDF
-    CHOSEN_THEME = THEMES[Math.floor(Math.random() * THEMES.length)];
-    PB = await mkPDF(SD, solution, CHOSEN_THEME);
-
-    document.querySelectorAll('.sp').forEach(p=>p.classList.remove('active'));
-    document.getElementById('step-done').classList.add('active');
-    [1,2,3,4].forEach(i=>{document.getElementById('si-'+i).classList.add('done');document.getElementById('si-'+i).classList.remove('active')});
-
-    // Show theme reveal
-    document.getElementById('tr-dot').style.background = CHOSEN_THEME.dot;
-    document.getElementById('tr-name').textContent = CHOSEN_THEME.name + ' Theme';
-
-  }catch(e){gs(3);err(3,e.message||'Something went wrong.');document.getElementById('payBtn').disabled=false;}
-}
-
-/* ══════════════════════════════════════════════════════
-   PDF BUILDER — uses the chosen theme object
-══════════════════════════════════════════════════════ */
-async function mkPDF(s, solution, T){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210,H=297,M=20,UW=170;
-  const C=T.C, P=T.P;
-
-  /* ── COVER ── */
-  doc.setFillColor(...C.bg); doc.rect(0,0,W,H,'F');
-  doc.setFillColor(...C.bar); doc.rect(0,0,6,H,'F');
-
-  doc.setFont('helvetica','bold'); doc.setFontSize(30);
-  doc.setTextColor(...C.title);
-  doc.text(s.subject.toUpperCase(), M+8, 55);
-
-  doc.setFontSize(14); doc.setTextColor(...C.accent);
-  doc.text('ASSIGNMENT SOLUTION', M+8, 68);
-
-  doc.setDrawColor(...C.bar); doc.setLineWidth(.6);
-  doc.line(M+8, 76, W-M, 76);
-
-  const fields=[['Name',s.name],['Roll No.',s.roll],['Batch',s.batch],['Subject',s.subject],['Institute',s.inst||'—'],
-    ['Date',new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})]];
-  fields.forEach(([l,v],i)=>{
-    const y=96+i*16;
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C.lbl); doc.text(l+':',M+8,y);
-    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.val); doc.text(v,M+50,y);
-  });
-
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C.foot);
-  doc.text('DigiSolve · Powered by Claude AI · For study reference only', W/2, H-12, {align:'center'});
-
-  /* ── SOLUTION PAGES ── */
-  const nhdr=()=>{
-    doc.addPage();
-    doc.setFillColor(...P.bg); doc.rect(0,0,W,H,'F');
-    doc.setFillColor(...P.hBg); doc.rect(0,0,W,14,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(9);
-    doc.setTextColor(...P.hTxt);
-    doc.text(s.subject+'  ·  '+s.name+'  ·  '+s.roll, M, 9);
-  };
-  nhdr(); let cy=26; const LH=6.5, PB_=H-20;
-  const chk=(e=0)=>{if(cy+e>PB_){nhdr();cy=26;}};
-
-  let inCodeBlock=false;
-  solution.split('\n').forEach(raw=>{
-    const ln=raw.trim();
-
-    // Track fenced code blocks
-    if(ln.startsWith('```')){inCodeBlock=!inCodeBlock;return;}
-
-    if(ln.startsWith('#')&&!inCodeBlock){
-      const t=ln.replace(/^#+\s*/,''); cy+=4; chk(14);
-      doc.setFillColor(...P.sBg);
-      doc.roundedRect(M-2,cy-5,UW+4,10,2,2,'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...P.sTxt);
-      doc.text(t,M,cy); cy+=LH+4;
-
-    } else if(ln.startsWith('**')&&ln.endsWith('**')&&!inCodeBlock){
-      const t=ln.replace(/\*\*/g,''); chk(LH+2);
-      doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(...P.bold);
-      doc.splitTextToSize(t,UW).forEach(w=>{chk();doc.text(w,M,cy);cy+=LH;}); cy+=2;
-
-    } else if(/^[-•]/.test(ln)&&!inCodeBlock){
-      const t='•  '+ln.replace(/^[-•]\s*/,'');
-      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...P.bullet);
-      doc.splitTextToSize(t,UW-6).forEach(w=>{chk();doc.text(w,M+6,cy);cy+=LH;});
-
-    } else if(ln===''){ cy+=3; }
-
-    else if(inCodeBlock || /^(module|endmodule|wire|reg|assign|nand|and|or|xor|not|always|initial|begin\b|end\b|input|output|\/\/|#[0-9]|\$)/.test(ln)){
-      // Code line styling
-      chk(LH);
-      doc.setFillColor(...P.sBg);
-      doc.rect(M-2, cy-4.5, UW+4, LH+1, 'F');
-      doc.setFont('courier','normal'); doc.setFontSize(8.2); doc.setTextColor(...P.sTxt);
-      doc.splitTextToSize(ln, UW-4).forEach(w=>{chk();doc.text(w,M+2,cy);cy+=LH;});
-
-    } else {
-      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...P.body);
-      doc.splitTextToSize(ln,UW).forEach(w=>{chk();doc.text(w,M,cy);cy+=LH;});
+    /* ── Drag-drop ── */
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const dz = document.getElementById('dz');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag') });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f && f.type === 'application/pdf') sf(f) });
+    function hf(i) { if (i.files[0]) sf(i.files[0]) }
+    function sf(f) {
+      if (f.size > 10 * 1024 * 1024) { err(2, 'File too large. Max 10 MB.'); return }
+      PF = f; document.getElementById('fn').textContent = f.name;
+      document.getElementById('fs').textContent = (f.size / 1024).toFixed(1) + ' KB';
+      document.getElementById('finfo').style.display = 'block';
     }
-  });
 
-  /* ── PAGE NUMBERS ── */
-  const tot=doc.getNumberOfPages();
-  for(let p=2;p<=tot;p++){
-    doc.setPage(p);
-    doc.setDrawColor(...P.div); doc.setLineWidth(.2);
-    doc.line(M,H-11,W-M,H-11);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...P.fTxt);
-    doc.text('Page '+p+' of '+tot, W-M, H-8, {align:'right'});
-    doc.text('DigiSolve · Study Reference Only', M, H-8);
-  }
-  return doc.output('arraybuffer');
-}
+    /* ── Steps ── */
+    function gs(n) {
+      document.querySelectorAll('.sp').forEach(p => p.classList.remove('active'));
+      document.getElementById('step-' + n).classList.add('active');
+      if (typeof n === 'number') [1, 2, 3, 4].forEach(i => { document.getElementById('si-' + i).classList.toggle('active', i === n); document.getElementById('si-' + i).classList.toggle('done', i < n) });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function err(s, m) { const e = document.getElementById('e' + s); e.textContent = '⚠ ' + m; e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 4000) }
+    function g2() {
+      const n = document.getElementById('sn').value.trim(), r = document.getElementById('sr').value.trim(), b = document.getElementById('sb').value.trim(), s = document.getElementById('ss').value.trim(), ins = document.getElementById('sinst').value.trim();
+      if (!n || !r || !b || !s) { err(1, 'Please fill all required fields.'); return }
+      SD = { name: n, roll: r, batch: b, subject: s, inst: ins }; gs(2);
+    }
+    function g3() {
+      if (!PF) { err(2, 'Please upload your assignment PDF first.'); return }
+      document.getElementById('pn').textContent = SD.name;
+      document.getElementById('prn').textContent = SD.roll;
+      document.getElementById('pf').textContent = PF.name;
+      gs(3);
+    }
 
-/* ── Download ── */
-function dl(){
-  const blob=new Blob([PB],{type:'application/pdf'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=SD.roll+'_'+(SD.subject||'Assignment').replace(/\s+/g,'_')+'_Solution.pdf';
-  a.click(); URL.revokeObjectURL(url);
-}
+    /* ── Payment ── */
+    function pay() {
+      if (RK === 'YOUR_RAZORPAY_KEY_ID') {
+        if (!confirm('DEV MODE: No Razorpay key. Proceed without payment for testing?')) return;
+        solve(); return;
+      }
+      document.getElementById('payBtn').disabled = true;
+      const opts = {
+        key: RK, amount: 1000, currency: 'INR', name: 'Quubit', description: SD.subject + ' Solution',
+        handler: () => solve(), prefill: { name: SD.name }, theme: { color: '#c9922a' },
+        modal: { ondismiss: () => document.getElementById('payBtn').disabled = false }
+      };
+      const rzp = new Razorpay(opts);
+      rzp.on('payment.failed', () => { err(3, 'Payment failed. Please try again.'); document.getElementById('payBtn').disabled = false });
+      rzp.open();
+    }
 
-/* ── Reset ── */
-function rst(){
-  PF=null;PT='';PB=null;SD={};CHOSEN_THEME=null;
-  document.getElementById('fi').value='';
-  document.getElementById('finfo').style.display='none';
-  ['sn','sr','sb','ss','sinst'].forEach(id=>document.getElementById(id).value='');
-  gs(1);
-}
-</script>
+    /* ── Extract PDF ── */
+    async function xt(file) {
+      const ab = await file.arrayBuffer(); const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+      let t = ''; for (let i = 1; i <= pdf.numPages; i++) { const pg = await pdf.getPage(i); const c = await pg.getTextContent(); t += c.items.map(s => s.str).join(' ') + '\n\n'; }
+      return t.trim();
+    }
+
+    /* ── Process step highlight ── */
+    function ap(i) { [1, 2, 3, 4].forEach((n, idx) => { const el = document.getElementById('ps' + n); el.className = 'ps' + (idx < i ? ' ok' : idx === i ? ' on' : ''); }) }
+
+    /* ── Main solve ── */
+    async function solve() {
+      document.querySelectorAll('.sp').forEach(p => p.classList.remove('active'));
+      document.getElementById('step-processing').classList.add('active');
+      try {
+        ap(0); PT = await xt(PF);
+        ap(1);
+        const res = await fetch('/api/solve', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student: SD, assignmentText: PT.substring(0, 8000) })
+        });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Server error') }
+        ap(2); const { solution } = await res.json();
+        ap(3);
+
+        // Pick random theme HERE — locked in for this student's PDF
+        CHOSEN_THEME = THEMES[Math.floor(Math.random() * THEMES.length)];
+        PB = await mkPDF(SD, solution, CHOSEN_THEME);
+
+        document.querySelectorAll('.sp').forEach(p => p.classList.remove('active'));
+        document.getElementById('step-done').classList.add('active');
+        [1, 2, 3, 4].forEach(i => { document.getElementById('si-' + i).classList.add('done'); document.getElementById('si-' + i).classList.remove('active') });
+
+        // Show theme reveal
+        document.getElementById('tr-dot').style.background = CHOSEN_THEME.dot;
+        document.getElementById('tr-name').textContent = CHOSEN_THEME.name + ' Theme';
+
+      } catch (e) { gs(3); err(3, e.message || 'Something went wrong.'); document.getElementById('payBtn').disabled = false; }
+    }
+
+    /* ══════════════════════════════════════════════════════
+       PDF BUILDER — uses the chosen theme object
+    ══════════════════════════════════════════════════════ */
+    async function mkPDF(s, solution, T) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const W = 210, H = 297, M = 20, UW = 170;
+      const C = T.C, P = T.P;
+
+      /* ── COVER ── */
+      doc.setFillColor(...C.bg); doc.rect(0, 0, W, H, 'F');
+      doc.setFillColor(...C.bar); doc.rect(0, 0, 6, H, 'F');
+
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(30);
+      doc.setTextColor(...C.title);
+      doc.text(s.subject.toUpperCase(), M + 8, 55);
+
+      doc.setFontSize(14); doc.setTextColor(...C.accent);
+      doc.text('ASSIGNMENT SOLUTION', M + 8, 68);
+
+      doc.setDrawColor(...C.bar); doc.setLineWidth(.6);
+      doc.line(M + 8, 76, W - M, 76);
+
+      const fields = [['Name', s.name], ['Roll No.', s.roll], ['Batch', s.batch], ['Subject', s.subject], ['Institute', s.inst || '—'],
+      ['Date', new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })]];
+      fields.forEach(([l, v], i) => {
+        const y = 96 + i * 16;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...C.lbl); doc.text(l + ':', M + 8, y);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C.val); doc.text(v, M + 50, y);
+      });
+
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...C.foot);
+      doc.text('Quubit · Powered by Claude AI · For study reference only', W / 2, H - 12, { align: 'center' });
+
+      /* ── SOLUTION PAGES ── */
+      const nhdr = () => {
+        doc.addPage();
+        doc.setFillColor(...P.bg); doc.rect(0, 0, W, H, 'F');
+        doc.setFillColor(...P.hBg); doc.rect(0, 0, W, 14, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+        doc.setTextColor(...P.hTxt);
+        doc.text(s.subject + '  ·  ' + s.name + '  ·  ' + s.roll, M, 9);
+      };
+      nhdr(); let cy = 26; const LH = 6.5, PB_ = H - 20;
+      const chk = (e = 0) => { if (cy + e > PB_) { nhdr(); cy = 26; } };
+
+      let inCodeBlock = false;
+      solution.split('\n').forEach(raw => {
+        const ln = raw.trim();
+
+        // Track fenced code blocks
+        if (ln.startsWith('```')) { inCodeBlock = !inCodeBlock; return; }
+
+        if (ln.startsWith('#') && !inCodeBlock) {
+          const t = ln.replace(/^#+\s*/, ''); cy += 4; chk(14);
+          doc.setFillColor(...P.sBg);
+          doc.roundedRect(M - 2, cy - 5, UW + 4, 10, 2, 2, 'F');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...P.sTxt);
+          doc.text(t, M, cy); cy += LH + 4;
+
+        } else if (ln.startsWith('**') && ln.endsWith('**') && !inCodeBlock) {
+          const t = ln.replace(/\*\*/g, ''); chk(LH + 2);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...P.bold);
+          doc.splitTextToSize(t, UW).forEach(w => { chk(); doc.text(w, M, cy); cy += LH; }); cy += 2;
+
+        } else if (/^[-•]/.test(ln) && !inCodeBlock) {
+          const t = '•  ' + ln.replace(/^[-•]\s*/, '');
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...P.bullet);
+          doc.splitTextToSize(t, UW - 6).forEach(w => { chk(); doc.text(w, M + 6, cy); cy += LH; });
+
+        } else if (ln === '') { cy += 3; }
+
+        else if (inCodeBlock || /^(module|endmodule|wire|reg|assign|nand|and|or|xor|not|always|initial|begin\b|end\b|input|output|\/\/|#[0-9]|\$)/.test(ln)) {
+          // Code line styling
+          chk(LH);
+          doc.setFillColor(...P.sBg);
+          doc.rect(M - 2, cy - 4.5, UW + 4, LH + 1, 'F');
+          doc.setFont('courier', 'normal'); doc.setFontSize(8.2); doc.setTextColor(...P.sTxt);
+          doc.splitTextToSize(ln, UW - 4).forEach(w => { chk(); doc.text(w, M + 2, cy); cy += LH; });
+
+        } else {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...P.body);
+          doc.splitTextToSize(ln, UW).forEach(w => { chk(); doc.text(w, M, cy); cy += LH; });
+        }
+      });
+
+      /* ── PAGE NUMBERS ── */
+      const tot = doc.getNumberOfPages();
+      for (let p = 2; p <= tot; p++) {
+        doc.setPage(p);
+        doc.setDrawColor(...P.div); doc.setLineWidth(.2);
+        doc.line(M, H - 11, W - M, H - 11);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...P.fTxt);
+        doc.text('Page ' + p + ' of ' + tot, W - M, H - 8, { align: 'right' });
+        doc.text('Quubit · Study Reference Only', M, H - 8);
+      }
+      return doc.output('arraybuffer');
+    }
+
+    /* ── Download ── */
+    function dl() {
+      const blob = new Blob([PB], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = SD.roll + '_' + (SD.subject || 'Assignment').replace(/\s+/g, '_') + '_Solution.pdf';
+      a.click(); URL.revokeObjectURL(url);
+    }
+
+    /* ── Reset ── */
+    function rst() {
+      PF = null; PT = ''; PB = null; SD = {}; CHOSEN_THEME = null;
+      document.getElementById('fi').value = '';
+      document.getElementById('finfo').style.display = 'none';
+      ['sn', 'sr', 'sb', 'ss', 'sinst'].forEach(id => document.getElementById(id).value = '');
+      gs(1);
+    }
+  </script>
 </body>
+
 </html>
