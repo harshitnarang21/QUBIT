@@ -1,293 +1,147 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Theme lookup — selected server-side based on roll number last digit
+const THEMES: Record<string, { name: string; font: string; mono: string; cover: string; accent: string; coverText: string; headerBg: string; headerText: string; sectionBg: string; sectionText: string; codeBg: string; codeText: string; pageBg: string; bodyText: string; tableHeadBg: string; tableHeadText: string; tableEvenBg: string }> = {
+  '0': { name: 'Navy', font: 'Georgia, serif', mono: 'Courier New', cover: '#0a1232', accent: '#d4af37', coverText: '#e6e1d2', headerBg: '#0a1232', headerText: '#ffffff', sectionBg: '#e8ecf8', sectionText: '#14235a', codeBg: '#1e2a4a', codeText: '#c8d8f8', pageBg: '#f8f9fc', bodyText: '#1e2337', tableHeadBg: '#0a1232', tableHeadText: '#ffffff', tableEvenBg: '#edf0fa' },
+  '1': { name: 'Navy', font: 'Georgia, serif', mono: 'Courier New', cover: '#0a1232', accent: '#d4af37', coverText: '#e6e1d2', headerBg: '#0a1232', headerText: '#ffffff', sectionBg: '#e8ecf8', sectionText: '#14235a', codeBg: '#1e2a4a', codeText: '#c8d8f8', pageBg: '#f8f9fc', bodyText: '#1e2337', tableHeadBg: '#0a1232', tableHeadText: '#ffffff', tableEvenBg: '#edf0fa' },
+  '2': { name: 'Green', font: 'Palatino, serif', mono: 'Courier New', cover: '#0c1e14', accent: '#50b478', coverText: '#e1f0e6', headerBg: '#124628', headerText: '#dcf5e6', sectionBg: '#daf0e4', sectionText: '#0f4628', codeBg: '#0e2e1c', codeText: '#a8e6c0', pageBg: '#f7fbf8', bodyText: '#1e3226', tableHeadBg: '#124628', tableHeadText: '#dcf5e6', tableEvenBg: '#e8f7ee' },
+  '3': { name: 'Green', font: 'Palatino, serif', mono: 'Courier New', cover: '#0c1e14', accent: '#50b478', coverText: '#e1f0e6', headerBg: '#124628', headerText: '#dcf5e6', sectionBg: '#daf0e4', sectionText: '#0f4628', codeBg: '#0e2e1c', codeText: '#a8e6c0', pageBg: '#f7fbf8', bodyText: '#1e3226', tableHeadBg: '#124628', tableHeadText: '#dcf5e6', tableEvenBg: '#e8f7ee' },
+  '4': { name: 'Maroon', font: 'Times New Roman, serif', mono: 'Lucida Console', cover: '#26080e', accent: '#c3a064', coverText: '#f5ead7', headerBg: '#78142a', headerText: '#fff5e6', sectionBg: '#f8ebe4', sectionText: '#640f19', codeBg: '#2e0810', codeText: '#f0c8a0', pageBg: '#fdfaf5', bodyText: '#2d191c', tableHeadBg: '#78142a', tableHeadText: '#fff5e6', tableEvenBg: '#fdf0e8' },
+  '5': { name: 'Maroon', font: 'Times New Roman, serif', mono: 'Lucida Console', cover: '#26080e', accent: '#c3a064', coverText: '#f5ead7', headerBg: '#78142a', headerText: '#fff5e6', sectionBg: '#f8ebe4', sectionText: '#640f19', codeBg: '#2e0810', codeText: '#f0c8a0', pageBg: '#fdfaf5', bodyText: '#2d191c', tableHeadBg: '#78142a', tableHeadText: '#fff5e6', tableEvenBg: '#fdf0e8' },
+  '6': { name: 'Slate', font: 'Arial, sans-serif', mono: 'Consolas', cover: '#16181e', accent: '#eb6e28', coverText: '#ebebf0', headerBg: '#262a37', headerText: '#f0f0f5', sectionBg: '#f0ebe1', sectionText: '#a04b14', codeBg: '#1a1e2a', codeText: '#ffd0a8', pageBg: '#f8f8fa', bodyText: '#262834', tableHeadBg: '#262a37', tableHeadText: '#f0f0f5', tableEvenBg: '#f2efea' },
+  '7': { name: 'Slate', font: 'Arial, sans-serif', mono: 'Consolas', cover: '#16181e', accent: '#eb6e28', coverText: '#ebebf0', headerBg: '#262a37', headerText: '#f0f0f5', sectionBg: '#f0ebe1', sectionText: '#a04b14', codeBg: '#1a1e2a', codeText: '#ffd0a8', pageBg: '#f8f8fa', bodyText: '#262834', tableHeadBg: '#262a37', tableHeadText: '#f0f0f5', tableEvenBg: '#f2efea' },
+  '8': { name: 'Purple', font: 'Garamond, serif', mono: 'Courier New', cover: '#120826', accent: '#be9beb', coverText: '#ebe6f8', headerBg: '#37196e', headerText: '#f0ebff', sectionBg: '#eee6ff', sectionText: '#3c1278', codeBg: '#1a0e38', codeText: '#d4b8ff', pageBg: '#faf8ff', bodyText: '#23193a', tableHeadBg: '#37196e', tableHeadText: '#f0ebff', tableEvenBg: '#f4eeff' },
+  '9': { name: 'Teal', font: 'Trebuchet MS, sans-serif', mono: 'Courier New', cover: '#082026', accent: '#20b9be', coverText: '#e1f2f4', headerBg: '#0a5a64', headerText: '#dcf8fa', sectionBg: '#d7f2f4', sectionText: '#085864', codeBg: '#071e24', codeText: '#a0e8ec', pageBg: '#f6fcfd', bodyText: '#19323a', tableHeadBg: '#0a5a64', tableHeadText: '#dcf8fa', tableEvenBg: '#e8f9fa' },
+};
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { student, assignmentText } = body;
 
     if (!student || !student.name || !student.roll || !student.batch || !student.subject || !assignmentText) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Groq API key not configured. Please set GROQ_API_KEY in .env.local" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Groq API key not configured. Please set GROQ_API_KEY in .env.local" }, { status: 500 });
     }
 
-    // Compute last digit of roll number for theme selection
+    // Select theme based on roll number
     const rollDigits = student.roll.replace(/\D/g, "");
     const lastDigit = rollDigits.length > 0 ? rollDigits[rollDigits.length - 1] : "0";
+    const t = THEMES[lastDigit] || THEMES['0'];
 
-    const promptTemplate = `You are an expert Digital Design professor. Solve the student's assignment completely.
-Your ENTIRE response must be a single, complete, valid HTML document with embedded CSS.
-Output NOTHING except the HTML — no explanation, no markdown, no preamble.
+    // Build the prompt with EXACT colors baked in (no CSS variables for the model to mess up)
+    const prompt = `You are an expert professor for the subject "${student.subject}". Solve the student's assignment completely and thoroughly.
 
-STUDENT INFORMATION:
-- Name: {{STUDENT_NAME}}
-- Roll Number: {{ROLL_NUMBER}}
-- Batch / Section: {{BATCH}}
-- Subject: {{SUBJECT}}
-- Institute: {{INSTITUTE}}
+Your output must be a SINGLE, COMPLETE, VALID HTML document. Output NOTHING except HTML — no markdown fences, no explanation.
 
-ASSIGNMENT CONTENT:
-{{ASSIGNMENT_TEXT}}
+STUDENT: ${student.name} | ROLL: ${student.roll} | BATCH: ${student.batch} | SUBJECT: ${student.subject} | INSTITUTE: ${student.inst || '—'}
 
-════════════════════════════════════════
-THEME SELECTION RULE
-════════════════════════════════════════
+ASSIGNMENT:
+${assignmentText.substring(0, 8000)}
 
-Take the last digit of the roll number: {{LAST_DIGIT_OF_ROLL}}
-
-Map it to a theme:
-  0, 1 → Theme A: Classic Navy      (cover: #0a1232, accent: #d4af37)
-  2, 3 → Theme B: Forest Green      (cover: #0c1e14, accent: #50b478)
-  4, 5 → Theme C: Maroon University (cover: #26080e, accent: #c3a064)
-  6, 7 → Theme D: Slate & Orange    (cover: #16181e, accent: #eb6e28)
-  8    → Theme E: Purple Elegant    (cover: #120826, accent: #be9beb)
-  9    → Theme F: Teal Modern       (cover: #082026, accent: #20b9be)
-
-Use ONLY the selected theme's colors throughout the entire document.
-
-════════════════════════════════════════
-HTML DOCUMENT STRUCTURE — FOLLOW EXACTLY
-════════════════════════════════════════
+═══════════════════════════════
+EXACT HTML TO PRODUCE
+═══════════════════════════════
 
 <!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8"/>
+<html><head><meta charset="UTF-8"/>
 <style>
-
-/* === PAGE SETUP === */
-@page { size: A4; margin: 15mm 15mm 20mm 15mm; }
-@media print {
-  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .cover { page-break-after: always; }
-}
+@page { size: A4; margin: 15mm; }
+@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .cover { page-break-after: always; } }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: [choose based on theme]; font-size: 11pt; }
+body { font-family: ${t.font}; font-size: 11pt; color: ${t.bodyText}; background: ${t.pageBg}; line-height: 1.6; }
 
-/* === COVER PAGE === */
-/* Full A4 dark page with left accent bar, student info grid, decorative circle */
-/* height: 297mm; width: 210mm; position: relative; overflow: hidden */
+/* COVER */
+.cover { height: 297mm; width: 210mm; background: ${t.cover}; position: relative; overflow: hidden; padding: 60px 40px 40px 30mm; }
+.cover .bar { position: absolute; left: 0; top: 0; width: 8mm; height: 100%; background: ${t.accent}; }
+.cover h1 { font-size: 28pt; color: ${t.coverText}; margin-top: 80px; }
+.cover .sub { font-size: 13pt; color: ${t.accent}; letter-spacing: 2px; text-transform: uppercase; margin-top: 8px; }
+.cover .line { height: 2px; background: linear-gradient(to right, ${t.accent}, transparent); margin: 30px 0; width: 60%; }
+.cover .info { display: grid; grid-template-columns: 130px 1fr; gap: 10px 16px; margin-top: 20px; }
+.cover .lbl { font-size: 10pt; color: ${t.accent}; font-weight: bold; text-transform: uppercase; }
+.cover .val { font-size: 11pt; color: ${t.coverText}; }
+.cover .circle { position: absolute; bottom: 40px; right: 40px; width: 120px; height: 120px; border: 3px solid ${t.accent}; border-radius: 50%; opacity: 0.3; }
+.cover .circle2 { position: absolute; bottom: 20px; right: 20px; width: 80px; height: 80px; border: 2px solid ${t.accent}; border-radius: 50%; opacity: 0.15; }
 
-/* === PAGE HEADER === */
-/* Colored bar at top of every solution page showing: Subject · Name · Roll No. */
+/* HEADER BAR */
+.hdr { background: ${t.headerBg}; color: ${t.headerText}; padding: 8px 16px; font-size: 9pt; margin-bottom: 20px; display: flex; justify-content: space-between; }
 
-/* === SECTION HEADINGS (## in solution) === */
-/* Pill-shaped colored background, left border in accent color */
+/* SECTION HEADINGS */
+.sec { background: ${t.sectionBg}; color: ${t.sectionText}; padding: 10px 16px; border-left: 4px solid ${t.accent}; border-radius: 0 6px 6px 0; font-size: 14pt; font-weight: bold; margin: 24px 0 16px; }
 
-/* === QUESTION HEADINGS (**Question N:**) === */
-/* Slightly smaller, bold, accent color text, bottom border line */
+/* QUESTION */
+.q { font-weight: bold; color: ${t.sectionText}; font-size: 12pt; margin: 20px 0 10px; padding-bottom: 4px; border-bottom: 2px solid ${t.accent}; }
 
-/* === TRUTH TABLES === */
-/* Full-width, striped rows, colored header row using theme header color */
+/* TABLES */
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; }
+th { background: ${t.tableHeadBg}; color: ${t.tableHeadText}; padding: 8px; text-align: center; }
+td { padding: 6px 8px; text-align: center; border: 1px solid #ddd; }
+tr:nth-child(even) { background: ${t.tableEvenBg}; }
 
-/* === VERILOG CODE BLOCKS === */
-/* Dark background, left accent border 4px, monospace font */
+/* CODE */
+pre { background: ${t.codeBg}; color: ${t.codeText}; padding: 14px 16px; border-left: 4px solid ${t.accent}; border-radius: 4px; font-family: ${t.mono}, monospace; font-size: 10pt; overflow-x: auto; margin: 12px 0; white-space: pre-wrap; }
 
-/* === KEY CONCEPT BOXES === */
-/* Light accent background, left border, italic text, rounded corners */
+/* KEY CONCEPT */
+.tip { background: ${t.sectionBg}; border-left: 4px solid ${t.accent}; padding: 10px 14px; margin: 12px 0; border-radius: 4px; font-style: italic; font-size: 10pt; }
 
-/* NO PAGE FOOTER. Do NOT include any footer element. */
-
-</style>
-</head>
+.content { padding: 10px 20px 40px; }
+p, ul, ol { margin: 8px 0; }
+li { margin-left: 20px; }
+</style></head>
 <body>
 
 <!-- COVER PAGE -->
 <div class="cover">
-  <!-- Left accent bar (8px wide, full height, accent color) -->
-  <!-- Subject title large, "Assignment Solution" subtitle -->
-  <!-- Divider line in accent color -->
-  <!-- Student info grid: label | value for each field -->
-  <!-- Decorative circles bottom-right -->
-  <!-- NO footer. NO branding. NO theme name. -->
+  <div class="bar"></div>
+  <h1>${student.subject}</h1>
+  <div class="sub">Assignment Solution</div>
+  <div class="line"></div>
+  <div class="info">
+    <span class="lbl">Name</span><span class="val">${student.name}</span>
+    <span class="lbl">Roll No.</span><span class="val">${student.roll}</span>
+    <span class="lbl">Batch</span><span class="val">${student.batch}</span>
+    <span class="lbl">Subject</span><span class="val">${student.subject}</span>
+    <span class="lbl">Institute</span><span class="val">${student.inst || '—'}</span>
+  </div>
+  <div class="circle"></div>
+  <div class="circle2"></div>
 </div>
 
-<!-- SOLUTION PAGES -->
-<div class="solution-body">
-  <!-- Page header bar -->
-  <!-- Jump straight into solving questions. Do NOT write assignment objectives. -->
+<!-- SOLUTION — YOUR JOB: Fill in complete, detailed solutions below -->
+<div class="content">
+  <div class="hdr"><span>${student.subject}</span><span>${student.name} · ${student.roll}</span></div>
+
+  <!-- USE THESE CSS CLASSES:
+    <div class="sec">Section Title</div>
+    <div class="q">Question N:</div>
+    <table><tr><th>...</th></tr><tr><td>...</td></tr></table>
+    <pre>code here</pre>
+    <div class="tip">Key concept note</div>
+    <p>paragraph text</p>
+  -->
+
+  <!-- SOLVE EVERY QUESTION COMPLETELY. Show full truth tables, circuit descriptions, and Verilog code where needed. -->
+
 </div>
+</body></html>
 
-</body>
-</html>
-
-════════════════════════════════════════
-FONT SELECTION PER THEME
-════════════════════════════════════════
-
-Theme A (Classic Navy)     → body: 'Georgia, serif'       mono: 'Courier New'
-Theme B (Forest Green)     → body: 'Palatino, serif'      mono: 'Courier New'
-Theme C (Maroon University)→ body: 'Times New Roman'      mono: 'Lucida Console'
-Theme D (Slate & Orange)   → body: 'Arial, sans-serif'    mono: 'Consolas'
-Theme E (Purple Elegant)   → body: 'Garamond, serif'      mono: 'Courier New'
-Theme F (Teal Modern)      → body: 'Trebuchet MS'         mono: 'Courier New'
-
-════════════════════════════════════════
-THEME COLOR VARIABLES — USE FOR ALL ELEMENTS
-════════════════════════════════════════
-
-For your selected theme, define and use these exact CSS custom property values.
-
-Theme A — Classic Navy:
-  --cover-bg:#0a1232 --cover-accent:#d4af37 --cover-text:#e6e1d2
-  --header-bg:#0a1232 --header-text:#ffffff --section-bg:#e8ecf8 --section-text:#14235a
-  --code-bg:#1e2a4a --code-text:#c8d8f8 --code-comment:#8a9e6a
-  --body-text:#1e2337 --page-bg:#f8f9fc --accent-line:#d4af37
-  --table-head-bg:#0a1232 --table-head-txt:#ffffff --table-even-bg:#edf0fa
-  --key-concept-bg:#e8ecf8
-
-Theme B — Forest Green:
-  --cover-bg:#0c1e14 --cover-accent:#50b478 --cover-text:#e1f0e6
-  --header-bg:#124628 --header-text:#dcf5e6 --section-bg:#daf0e4 --section-text:#0f4628
-  --code-bg:#0e2e1c --code-text:#a8e6c0 --code-comment:#6abf88
-  --body-text:#1e3226 --page-bg:#f7fbf8 --accent-line:#50b478
-  --table-head-bg:#124628 --table-head-txt:#dcf5e6 --table-even-bg:#e8f7ee
-  --key-concept-bg:#daf0e4
-
-Theme C — Maroon University:
-  --cover-bg:#26080e --cover-accent:#c3a064 --cover-text:#f5ead7
-  --header-bg:#78142a --header-text:#fff5e6 --section-bg:#f8ebe4 --section-text:#640f19
-  --code-bg:#2e0810 --code-text:#f0c8a0 --code-comment:#a08848
-  --body-text:#2d191c --page-bg:#fdfaf5 --accent-line:#c3a064
-  --table-head-bg:#78142a --table-head-txt:#fff5e6 --table-even-bg:#fdf0e8
-  --key-concept-bg:#f8ebe4
-
-Theme D — Slate & Orange:
-  --cover-bg:#16181e --cover-accent:#eb6e28 --cover-text:#ebebf0
-  --header-bg:#262a37 --header-text:#f0f0f5 --section-bg:#f0ebe1 --section-text:#a04b14
-  --code-bg:#1a1e2a --code-text:#ffd0a8 --code-comment:#a0b870
-  --body-text:#262834 --page-bg:#f8f8fa --accent-line:#eb6e28
-  --table-head-bg:#262a37 --table-head-txt:#f0f0f5 --table-even-bg:#f2efea
-  --key-concept-bg:#f0ebe1
-
-Theme E — Purple Elegant:
-  --cover-bg:#120826 --cover-accent:#be9beb --cover-text:#ebe6f8
-  --header-bg:#37196e --header-text:#f0ebff --section-bg:#eee6ff --section-text:#3c1278
-  --code-bg:#1a0e38 --code-text:#d4b8ff --code-comment:#8a9e6a
-  --body-text:#23193a --page-bg:#faf8ff --accent-line:#be9beb
-  --table-head-bg:#37196e --table-head-txt:#f0ebff --table-even-bg:#f4eeff
-  --key-concept-bg:#eee6ff
-
-Theme F — Teal Modern:
-  --cover-bg:#082026 --cover-accent:#20b9be --cover-text:#e1f2f4
-  --header-bg:#0a5a64 --header-text:#dcf8fa --section-bg:#d7f2f4 --section-text:#085864
-  --code-bg:#071e24 --code-text:#a0e8ec --code-comment:#70a878
-  --body-text:#19323a --page-bg:#f6fcfd --accent-line:#20b9be
-  --table-head-bg:#0a5a64 --table-head-txt:#dcf8fa --table-even-bg:#e8f9fa
-  --key-concept-bg:#d7f2f4
-
-════════════════════════════════════════
-CSS RULES — WRITE ALL OF THESE
-════════════════════════════════════════
-
-COVER PAGE:
-  - Full A4 height: height: 297mm; width: 210mm; overflow: hidden
-  - background: var(--cover-bg)
-  - Left accent bar: position absolute, width 8mm, height 100%, background: var(--cover-accent)
-  - Content starts at margin-left: 22mm
-  - DO NOT include any theme badge or theme name anywhere
-  - Subject title: font-size 30pt, font-weight bold, color: var(--cover-text)
-  - "ASSIGNMENT SOLUTION" subtitle: font-size 14pt, color: var(--cover-accent), letter-spacing 1px
-  - Horizontal divider: height 1px, background: linear-gradient(to right, accent, transparent)
-  - Student info: display grid, grid-template-columns: 130px 1fr
-  - NO cover footer. NO branding text of any kind.
-
-SOLUTION PAGES:
-  - background: var(--page-bg)
-  - Page header: background var(--header-bg), color var(--header-text)
-
-HEADINGS:
-  - background: var(--section-bg), color: var(--section-text)
-  - border-left: 4px solid var(--accent-line), border-radius: 0 6px 6px 0
-
-TRUTH TABLES:
-  - Full width, striped rows, colored header row, centered text
-
-VERILOG CODE BLOCKS:
-  - background: var(--code-bg), border-left: 4px solid accent
-  - Monospace font, syntax-colored comments
-
-KEY CONCEPT BOXES:
-  - background: var(--key-concept-bg), border-left: 4px solid accent, italic
-
-NO FOOTER:
-  - Do NOT include any footer element.
-  - Do NOT write any branding, product names, AI credits, theme names, or "study reference" text anywhere.
-
-════════════════════════════════════════
-CONTENT RULES
-════════════════════════════════════════
-
-RULE 1 — NO THINKING OUT LOUD
-Never write your reasoning process. No self-corrections mid-answer.
-Only write the FINAL correct answer.
-
-RULE 2 — NO ASSIGNMENT OBJECTIVES
-Do NOT include any "Assignment Objectives" or "Learning Objectives" section.
-Jump straight into solving the questions.
-
-RULE 3 — VERILOG CODE
-Every module header:
-  // ============================================================
-  // Module     : [module_name]
-  // Student    : {{STUDENT_NAME}}
-  // Roll No.   : {{ROLL_NUMBER}}
-  // Batch      : {{BATCH}}
-  // Subject    : {{SUBJECT}}
-  // Description: [one clean sentence]
-  // ============================================================
-All wire declarations at TOP. Descriptive names only (no w1, w2, w3).
-
-RULE 4 — NAND EQUIVALENTS (use directly)
-  NOT A    → nand(out, A, A)
-  A AND B  → wire t; nand(t,A,B); nand(out,t,t)
-  A OR B   → wire na,nb; nand(na,A,A); nand(nb,B,B); nand(out,na,nb)
-  A XOR B  → wire t,ta,tb; nand(t,A,B); nand(ta,A,t); nand(tb,B,t); nand(out,ta,tb)
-
-RULE 5 — Complete tables, no rows missing.
-RULE 6 — No LaTeX. Plain text only.
-
-════════════════════════════════════════
-ABSOLUTELY FORBIDDEN CONTENT
-════════════════════════════════════════
-Do NOT include ANY of the following anywhere in the HTML output:
-  ✗ Any product name, brand name, or company name
-  ✗ "Powered by" credits of any kind
-  ✗ "Study reference only" or similar disclaimers
-  ✗ Theme name display (no "Classic Navy", "Forest Green", etc.)
-  ✗ "Assignment Objectives" or "Learning Objectives" section
-  ✗ Any footer bar with branding
-  ✗ Any AI attribution
-
-════════════════════════════════════════
-OUTPUT FORMAT
-════════════════════════════════════════
-
-Your output must be:
-  A complete, valid HTML file starting with <!DOCTYPE html>
-  All CSS embedded inside <style> tags
-  One cover page div, then all solution content
-  Nothing outside the HTML — no markdown, no explanation
-  The HTML must render perfectly when printed to PDF from a browser (Ctrl+P / Save as PDF)
-  Beautiful enough that a student would be proud to submit it`;
-
-    const finalPrompt = promptTemplate
-      .replace(/{{STUDENT_NAME}}/g, student.name)
-      .replace(/{{ROLL_NUMBER}}/g, student.roll)
-      .replace(/{{BATCH}}/g, student.batch)
-      .replace(/{{SUBJECT}}/g, student.subject)
-      .replace(/{{INSTITUTE}}/g, student.inst || '\u2014')
-      .replace(/{{LAST_DIGIT_OF_ROLL}}/g, lastDigit)
-      .replace('{{ASSIGNMENT_TEXT}}', assignmentText.substring(0, 8000));
+═══════════════════════════════
+RULES
+═══════════════════════════════
+1. Output the COMPLETE HTML document — the cover page HTML above is ALREADY written for you. Copy it exactly, then ADD your solutions inside the <div class="content"> section.
+2. Solve EVERY question thoroughly with detailed explanations, truth tables, and code.
+3. Use the exact CSS classes shown: .sec, .q, table, pre, .tip, p
+4. For Verilog code, add a module header comment with student name, roll, batch, subject.
+5. All wire names must be descriptive (not w1, w2).
+6. Truth tables must be COMPLETE — show ALL rows.
+7. No LaTeX. Plain text and HTML only.
+8. Do NOT include any branding, footer, "study reference", theme names, AI credits, or assignment objectives section.
+9. No markdown code fences. Raw HTML only.
+10. Make it detailed and thorough — a professor should be impressed.`;
 
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -300,14 +154,14 @@ Your output must be:
         messages: [
           {
             role: 'system',
-            content: 'You are an expert Digital Design professor. Output ONLY valid HTML. No markdown, no explanation, no preamble.'
+            content: 'You are an expert professor. Output ONLY a complete HTML document. No markdown, no explanation, no code fences. Start with <!DOCTYPE html> and end with </html>.'
           },
           {
             role: 'user',
-            content: finalPrompt
+            content: prompt
           }
         ],
-        max_tokens: 8192,
+        max_tokens: 32768,
         temperature: 0.3
       })
     });
@@ -331,9 +185,6 @@ Your output must be:
   } catch (error) {
     console.error("Error processing assignment:", error);
     const errorMessage = error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
