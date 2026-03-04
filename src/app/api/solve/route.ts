@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,15 +12,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || apiKey === "PASTE_YOUR_NEW_GEMINI_API_KEY_HERE") {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
       return NextResponse.json(
-        { error: "Gemini API key not configured. Please set GEMINI_API_KEY in .env.local" },
+        { error: "Groq API key not configured. Please set GROQ_API_KEY in .env.local" },
         { status: 500 }
       );
     }
-
-    const ai = new GoogleGenAI({ apiKey });
 
     // Compute last digit of roll number for theme selection
     const rollDigits = student.roll.replace(/\D/g, "");
@@ -292,14 +289,38 @@ Your output must be:
       .replace(/{{LAST_DIGIT_OF_ROLL}}/g, lastDigit)
       .replace('{{ASSIGNMENT_TEXT}}', assignmentText.substring(0, 8000));
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: finalPrompt
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert Digital Design professor. Output ONLY valid HTML. No markdown, no explanation, no preamble.'
+          },
+          {
+            role: 'user',
+            content: finalPrompt
+          }
+        ],
+        max_tokens: 8192,
+        temperature: 0.3
+      })
     });
 
-    let solution = response.text || "No solution generated.";
+    if (!groqResponse.ok) {
+      const errData = await groqResponse.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `Groq API error: ${groqResponse.status}`);
+    }
 
-    // Strip markdown code fences if Gemini wraps the HTML in them
+    const data = await groqResponse.json();
+    let solution = data.choices?.[0]?.message?.content || "No solution generated.";
+
+    // Strip markdown code fences if the model wraps the HTML in them
     solution = solution.replace(/^```html?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
 
     return NextResponse.json({
