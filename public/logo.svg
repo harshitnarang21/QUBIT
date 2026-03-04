@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120">
+  <defs>
+    <linearGradient id="ora" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F97316" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Q Icon -->
+  <g transform="translate(10, 15)">
+    <!-- Base Circle -->
+    <path d="M45,10 A35,35 0 1,0 80,45 A35,35 0 0,0 45,10 Z" fill="none" stroke="white" stroke-width="8"/>
+    <!-- Outer Arc -->
+    <path d="M45,10 A35,35 0 0,1 80,45" fill="none" stroke="url(#ora)" stroke-width="8" stroke-linecap="round"/>
+    <!-- Q Tail -->
+    <path d="M65,65 L85,85" stroke="url(#ora)" stroke-width="10" stroke-linecap="round" />
+    <!-- Center Dot -->
+    <circle cx="45" cy="45" r="8" fill="url(#ora)" />
+  </g>
+  
+  <!-- Text -->
+  <text x="110" y="72" font-family="'Oswald', sans-serif" font-weight="700" font-size="64" fill="white" letter-spacing="2">QUU<tspan fill="url(#ora)">BIT</tspan></text>
+</svg>
