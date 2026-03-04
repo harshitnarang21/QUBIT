@@ -1433,31 +1433,6 @@
 
       const filename = SD.roll + '_' + (SD.subject || 'Assignment').replace(/\s+/g, '_') + '_Solution.pdf';
 
-      // Extract body content and styles from the HTML solution
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(HTML_SOLUTION, 'text/html');
-
-      // Create a hidden container in the SAME document (critical for html2pdf)
-      const container = document.createElement('div');
-      container.id = 'pdf-render-zone';
-      // Use absolute at 0,0 behind everything instead of -9999px which breaks html2canvas bounding
-      container.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;z-index:-9999;pointer-events:none;';
-
-      // Copy all styles from the Gemini HTML
-      const styles = doc.querySelectorAll('style');
-      styles.forEach(s => {
-        const newStyle = document.createElement('style');
-        newStyle.textContent = s.textContent;
-        container.appendChild(newStyle);
-      });
-
-      // Copy the body content
-      container.innerHTML += doc.body.innerHTML;
-      document.body.appendChild(container);
-
-      // Wait for rendering and fonts
-      await new Promise(r => setTimeout(r, 1500));
-
       const opt = {
         margin: 0,
         filename: filename,
@@ -1468,21 +1443,24 @@
           logging: false
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
+        pagebreak: { mode: ['legacy'] } // css mode sometimes breaks string parsing
       };
 
       try {
-        await html2pdf().set(opt).from(container).save();
+        // Pass the raw HTML string directly to html2pdf.
+        // It handles parsing and iframe injection internally, which is much safer.
+        await html2pdf().set(opt).from(HTML_SOLUTION).save();
       } catch (e) {
-        // Fallback: download as HTML file
+        console.error("PDF Generation failed:", e);
+        // Fallback: download as HTML file ONLY if html2pdf critically fails
         const blob = new Blob([HTML_SOLUTION], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url; a.download = filename.replace('.pdf', '.html');
         a.click(); URL.revokeObjectURL(url);
+        alert('PDF generation engine failed. Downloading fallback HTML format instead.');
       }
 
-      document.body.removeChild(container);
       btn.textContent = '⬇ Download PDF';
       btn.disabled = false;
     }
