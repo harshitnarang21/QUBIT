@@ -13,6 +13,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     /* ═══════════════════════════════════════
        DESIGN SYSTEM
@@ -1022,11 +1023,13 @@
     <div class="nav-status">Available for Projects</div>
     <div class="nav-menu" style="display:flex; gap: 24px; align-items: center;">
       <!-- AUTH STATES -->
-      <div id="auth-logged-out" style="display: block;">
-        <button class="btn btn-primary" onclick="alert('Firebase init coming soon!')"
-          style="padding: 8px 16px; font-size: 0.8rem; height: auto;">
-          SIGN IN WITH GOOGLE
-        </button>
+      <div id="auth-logged-out" style="display: block; margin-top: 4px;">
+        <div id="g_id_onload" data-client_id="1020039716700-r51db7emuu5bque4rbf60iso0logseio.apps.googleusercontent.com"
+          data-context="signin" data-ux_mode="popup" data-callback="handleCredentialResponse" data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_black"
+          data-text="signin_with" data-size="medium" data-logo_alignment="left">
+        </div>
       </div>
       <div id="auth-logged-in" style="display: none; align-items: center; gap: 16px;">
         <span id="nav-user-name"
@@ -1643,115 +1646,117 @@
         </div>
       </div>
 
-    </div>
-  </div>
+      <script>
+        /* ═══════════════════════════════════════
+           HYBRID BACKEND (Google Auth + Local Storage Orders)
+        ═══════════════════════════════════════ */
+        let CURRENT_USER = null;
 
-  /* ═══════════════════════════════════════
-  MOCK BACKEND (Local Storage Prototype)
-  ═══════════════════════════════════════ */
-  let CURRENT_USER = null;
+        window.addEventListener('DOMContentLoaded', () => {
+          const storedUser = localStorage.getItem('quubit_mock_user');
+          if (storedUser) {
+            CURRENT_USER = JSON.parse(storedUser);
+            updateNavAuthState(true);
+          }
+        });
 
-  window.addEventListener('DOMContentLoaded', () => {
-  const storedUser = localStorage.getItem('quubit_mock_user');
-  if (storedUser) {
-  CURRENT_USER = JSON.parse(storedUser);
-  updateNavAuthState(true);
-  }
-  });
+        function handleCredentialResponse(response) {
+          try {
+            const token = response.credential;
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            const payload = JSON.parse(jsonPayload);
 
-  function mockGoogleSignIn() {
-  CURRENT_USER = {
-  uid: 'demo_user_' + Date.now(),
-  name: 'Demo Student',
-  email: 'student@university.edu'
-  };
-  localStorage.setItem('quubit_mock_user', JSON.stringify(CURRENT_USER));
-  updateNavAuthState(true);
-  }
+            CURRENT_USER = {
+              uid: payload.sub,
+              name: payload.name,
+              email: payload.email,
+              picture: payload.picture
+            };
 
-  function mockSignOut() {
-  CURRENT_USER = null;
-  localStorage.removeItem('quubit_mock_user');
-  updateNavAuthState(false);
-  closeOrdersModal();
-  }
+            localStorage.setItem('quubit_mock_user', JSON.stringify(CURRENT_USER));
+            updateNavAuthState(true);
+          } catch (e) {
+            console.error('Token Decode Error:', e);
+          }
+        }
 
-  function updateNavAuthState(isLoggedIn) {
-  document.getElementById('auth-logged-out').style.display = isLoggedIn ? 'none' : 'block';
-  document.getElementById('auth-logged-in').style.display = isLoggedIn ? 'flex' : 'none';
-  if (isLoggedIn) {
-  document.getElementById('nav-user-name').textContent = CURRENT_USER.name.split(' ')[0];
-  }
-  }
+        function mockSignOut() {
+          CURRENT_USER = null;
+          localStorage.removeItem('quubit_mock_user');
+          updateNavAuthState(false);
+          closeOrdersModal();
+        }
 
-  /* ── Modal Triggers & Order Fetching ── */
-  function openOrdersModal() {
-  const modal = document.getElementById('orders-modal');
-  const content = document.getElementById('orders-modal-content');
-  modal.style.display = 'flex';
+        function updateNavAuthState(isLoggedIn) {
+          document.getElementById('auth-logged-out').style.display = isLoggedIn ? 'none' : 'block';
+          document.getElementById('auth-logged-in').style.display = isLoggedIn ? 'flex' : 'none';
+          if (isLoggedIn) {
+            document.getElementById('nav-user-name').textContent = CURRENT_USER.name.split(' ')[0];
+          }
+        }
 
-  const listContainer = document.getElementById('orders-list');
+        /* ── Modal Triggers & Order Fetching ── */
+        function openOrdersModal() {
+          const modal = document.getElementById('orders-modal');
+          const content = document.getElementById('orders-modal-content');
+          modal.style.display = 'flex';
 
-  if (!CURRENT_USER) {
-  listContainer.innerHTML = '<div
-    style="text-align: center; color: var(--txt3); font-family: var(--font-mono); padding: 40px 0;">Please sign in to
-    view your orders.</div>';
-  } else {
-  const db = JSON.parse(localStorage.getItem('quubit_mock_orders') || '[]');
-  const userOrders = db.filter(o => o.uid === CURRENT_USER.uid).reverse();
+          const listContainer = document.getElementById('orders-list');
 
-  if (userOrders.length === 0) {
-  listContainer.innerHTML = '<div
-    style="text-align: center; color: var(--txt3); font-family: var(--font-mono); padding: 40px 0;">No past orders
-    found.</div>';
-  } else {
-  listContainer.innerHTML = '';
-  userOrders.forEach(order => {
-  const item = document.createElement('div');
-  item.style.cssText = 'padding: 16px; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; background:
-  rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;';
-  const dateStr = new Date(order.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year:
-  'numeric' });
-  item.innerHTML = `
-  <div>
-    <div style="font-family: var(--font-head); font-size: 1.1rem; color: var(--txt);">${order.subject}</div>
-    <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--txt3); margin-top: 4px;">PDF:
-      ${order.fileName} &nbsp;·&nbsp; ${dateStr}</div>
-  </div>
-  <div
-    style="font-family: var(--font-mono); font-size: 0.7rem; color: #22c55e; border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); padding: 4px 10px; border-radius: 12px;">
-    ${order.status}
-  </div>
-  `;
-  listContainer.appendChild(item);
-  });
-  }
+          if (!CURRENT_USER) {
+            listContainer.innerHTML = '<div style="text-align: center; color: var(--txt3); font-family: var(--font-mono); padding: 40px 0;">Please sign in to view your orders.</div>';
+          } else {
+            const db = JSON.parse(localStorage.getItem('quubit_mock_orders') || '[]');
+            const userOrders = db.filter(o => o.uid === CURRENT_USER.uid).reverse();
 
-  // Add Sign Out button to bottom of modal
-  const signOutBtn = document.createElement('div');
-  signOutBtn.style.cssText = 'margin-top: 24px; text-align: center; border-top: 1px solid var(--bdr); padding-top:
-  24px;';
-  signOutBtn.innerHTML = '<button class="btn btn-outline" onclick="mockSignOut()"
-    style="color: #ef4444; border-color: rgba(239,68,68,0.2);">Sign Out</button>';
-  listContainer.appendChild(signOutBtn);
-  }
+            if (userOrders.length === 0) {
+              listContainer.innerHTML = '<div style="text-align: center; color: var(--txt3); font-family: var(--font-mono); padding: 40px 0;">No past orders found.</div>';
+            } else {
+              listContainer.innerHTML = '';
+              userOrders.forEach(order => {
+                const item = document.createElement('div');
+                item.style.cssText = 'padding: 16px; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;';
+                const dateStr = new Date(order.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                item.innerHTML = `
+              <div>
+                <div style="font-family: var(--font-head); font-size: 1.1rem; color: var(--txt);">${order.subject}</div>
+                <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--txt3); margin-top: 4px;">PDF: ${order.fileName} &nbsp;·&nbsp; ${dateStr}</div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.7rem; color: #22c55e; border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); padding: 4px 10px; border-radius: 12px;">
+                ${order.status}
+              </div>
+            `;
+                listContainer.appendChild(item);
+              });
+            }
 
-  setTimeout(() => {
-  modal.style.opacity = '1';
-  content.style.transform = 'translateY(0)';
-  }, 10);
-  }
+            // Add Sign Out button to bottom of modal
+            const signOutBtn = document.createElement('div');
+            signOutBtn.style.cssText = 'margin-top: 24px; text-align: center; border-top: 1px solid var(--bdr); padding-top: 24px;';
+            signOutBtn.innerHTML = '<button class="btn btn-outline" onclick="mockSignOut()" style="color: #ef4444; border-color: rgba(239,68,68,0.2);">Sign Out</button>';
+            listContainer.appendChild(signOutBtn);
+          }
 
-  function closeOrdersModal() {
-  const modal = document.getElementById('orders-modal');
-  const content = document.getElementById('orders-modal-content');
-  modal.style.opacity = '0';
-  content.style.transform = 'translateY(20px)';
-  setTimeout(() => {
-  modal.style.display = 'none';
-  }, 300);
-  }
-  </script>
+          setTimeout(() => {
+            modal.style.opacity = '1';
+            content.style.transform = 'translateY(0)';
+          }, 10);
+        }
+
+        function closeOrdersModal() {
+          const modal = document.getElementById('orders-modal');
+          const content = document.getElementById('orders-modal-content');
+          modal.style.opacity = '0';
+          content.style.transform = 'translateY(20px)';
+          setTimeout(() => {
+            modal.style.display = 'none';
+          }, 300);
+        }
+      </script>
 </body>
 
 </html>
