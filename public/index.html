@@ -1440,7 +1440,8 @@
       // Create a hidden container in the SAME document (critical for html2pdf)
       const container = document.createElement('div');
       container.id = 'pdf-render-zone';
-      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;background:#fff;z-index:-1;';
+      // Use absolute at 0,0 behind everything instead of -9999px which breaks html2canvas bounding
+      container.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;z-index:-9999;pointer-events:none;';
 
       // Copy all styles from the Gemini HTML
       const styles = doc.querySelectorAll('style');
@@ -1454,14 +1455,20 @@
       container.innerHTML += doc.body.innerHTML;
       document.body.appendChild(container);
 
-      // Wait for rendering
-      await new Promise(r => setTimeout(r, 1000));
+      // Wait for rendering and fonts
+      await new Promise(r => setTimeout(r, 1500));
 
       const opt = {
         margin: 0,
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          windowWidth: 794 // 210mm at 96dpi approx
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
       };
