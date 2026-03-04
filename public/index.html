@@ -1349,8 +1349,52 @@
        PAYMENT
     ═══════════════════════════════════════ */
     function pay() {
-      // DEV MODE: BYPASS PAYMENT
-      solve(); return;
+      const btn = document.querySelector('#step-03-pay .btn-primary');
+      btn.disabled = true;
+      btn.textContent = '⏳ Waiting for Payment...';
+
+      const RK = 'rzp_live_SMrFP7iMMZCvt5'; // The user's Razorpay key
+
+      const opts = {
+        key: RK,
+        amount: 1000, // 10 INR
+        currency: 'INR',
+        name: 'Quubit',
+        description: SD.subject + ' Assignment Solution',
+        image: '/logo.png', // Uses the newly generated logo
+        handler: () => {
+          // Payment successful! Trigger solution generation
+          btn.textContent = '✅ Payment Successful';
+          solve();
+        },
+        prefill: {
+          name: SD.name
+        },
+        theme: {
+          color: '#F97316' // Match the ETREA Orange accent
+        },
+        modal: {
+          ondismiss: () => {
+            err(3, 'Payment cancelled. Please try again.');
+            btn.textContent = 'Secure Checkout →';
+            btn.disabled = false;
+          }
+        }
+      };
+
+      try {
+        const rzp = new Razorpay(opts);
+        rzp.on('payment.failed', () => {
+          err(3, 'Payment failed. Please try again.');
+          btn.textContent = 'Secure Checkout →';
+          btn.disabled = false;
+        });
+        rzp.open();
+      } catch (e) {
+        err(3, 'Payment gateway error. Check console.');
+        btn.textContent = 'Secure Checkout →';
+        btn.disabled = false;
+      }
     }
 
     /* ═══════════════════════════════════════
