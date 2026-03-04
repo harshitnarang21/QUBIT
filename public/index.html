@@ -1349,9 +1349,11 @@
        PAYMENT
     ═══════════════════════════════════════ */
     function pay() {
-      const btn = document.querySelector('#step-03-pay .btn-primary');
-      btn.disabled = true;
-      btn.textContent = '⏳ Waiting for Payment...';
+      const btn = document.querySelector('#pc-3 .btn-primary');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Waiting for Payment...';
+      }
 
       const RK = 'rzp_live_SMrFP7iMMZCvt5'; // The user's Razorpay key
 
@@ -1376,8 +1378,10 @@
         modal: {
           ondismiss: () => {
             err(3, 'Payment cancelled. Please try again.');
-            btn.textContent = 'Secure Checkout →';
-            btn.disabled = false;
+            if (btn) {
+              btn.textContent = 'Secure Checkout →';
+              btn.disabled = false;
+            }
           }
         }
       };
@@ -1386,14 +1390,18 @@
         const rzp = new Razorpay(opts);
         rzp.on('payment.failed', () => {
           err(3, 'Payment failed. Please try again.');
-          btn.textContent = 'Secure Checkout →';
-          btn.disabled = false;
+          if (btn) {
+            btn.textContent = 'Secure Checkout →';
+            btn.disabled = false;
+          }
         });
         rzp.open();
       } catch (e) {
         err(3, 'Payment gateway error. Check console.');
-        btn.textContent = 'Secure Checkout →';
-        btn.disabled = false;
+        if (btn) {
+          btn.textContent = 'Secure Checkout →';
+          btn.disabled = false;
+        }
       }
     }
 
