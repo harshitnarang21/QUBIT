@@ -133,15 +133,20 @@ li { margin-left: 20px; }
 RULES
 ═══════════════════════════════
 1. Output the COMPLETE HTML document — the cover page HTML above is ALREADY written for you. Copy it exactly, then ADD your solutions inside the <div class="content"> section.
-2. Solve EVERY question thoroughly with detailed explanations, truth tables, and code.
+2. Solve EVERY question extremely thoroughly. elaborate on the answers, explain the steps clearly, provide circuit descriptions, and show full truth tables. A professor should be highly impressed by the level of detail.
 3. Use the exact CSS classes shown: .sec, .q, table, pre, .tip, p
-4. For Verilog code, add a module header comment with student name, roll, batch, subject.
-5. All wire names must be descriptive (not w1, w2).
-6. Truth tables must be COMPLETE — show ALL rows.
-7. No LaTeX. Plain text and HTML only.
-8. Do NOT include any branding, footer, "study reference", theme names, AI credits, or assignment objectives section.
-9. No markdown code fences. Raw HTML only.
-10. Make it detailed and thorough — a professor should be impressed.`;
+4. For ANY Verilog code requested, you MUST provide BOTH a "design.sv" and a "testbench.sv".
+5. The Verilog testbench MUST be EDA Playground friendly and INCLUDE waveform dumping code inside an initial block:
+    initial begin
+      $dumpfile("dump.vcd");
+      $dumpvars;
+    end
+6. For Verilog code, add a module header comment with student name, roll, batch, subject.
+7. All wire names must be descriptive (not w1, w2).
+8. Truth tables must be COMPLETE — show ALL rows.
+9. No LaTeX. Plain text and HTML only.
+10. Do NOT include any branding, footer, "study reference", theme names, AI credits, or assignment objectives section.
+11. No markdown code fences. Raw HTML only.`;
 
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
