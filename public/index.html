@@ -9,7 +9,7 @@
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
     rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- jsPDF removed: Gemini now outputs complete styled HTML -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     :root {
@@ -727,16 +727,17 @@
     <div class="sp" id="step-done">
       <div class="okr">✅</div>
       <div class="ct">Solution Ready!</div>
-      <div class="cs" style="margin-bottom:8px">Your assignment solution is ready with your unique theme.</div>
-      <!-- Theme reveal shown after generation -->
+      <div class="cs" style="margin-bottom:8px">Your assignment solution is ready with a unique theme based on your roll
+        number.</div>
       <div class="theme-reveal" id="theme-reveal">
         <div class="tr-dot" id="tr-dot"></div>
         <div class="tr-info">
           <div class="tr-name" id="tr-name">—</div>
-          <div class="tr-sub">Your unique PDF theme</div>
+          <div class="tr-sub">Your unique PDF theme (based on roll number)</div>
         </div>
       </div>
-      <button class="btn bgr" onclick="dl()">⬇ Download Assignment PDF</button>
+      <button class="btn bgr" onclick="dl()">⬇ Download Solution (HTML → Print to PDF)</button>
+      <button class="btn bg" onclick="preview()" style="margin-top:10px">👁 Preview in New Tab</button>
       <button class="btn bgh" onclick="rst()">Solve Another →</button>
     </div>
 
@@ -755,50 +756,21 @@
     const RK = 'rzp_live_SMrFP7iMMZCvt5';
 
     /* ── State ── */
-    let SD = {}, PF = null, PT = '', PB = null, CHOSEN_THEME = null;
+    let SD = {}, PF = null, PT = '', HTML_SOLUTION = null;
 
-    /* ═══════════════════════════════════════
-       6 DISTINCT THEMES
-       Picked randomly per user at build time
-    ═══════════════════════════════════════ */
-    const THEMES = [
-      {
-        name: 'Classic Navy',
-        dot: 'linear-gradient(135deg,#0a1232,#d4af37)',
-        C: { bg: [10, 18, 45], bar: [212, 175, 55], title: [230, 225, 210], accent: [212, 175, 55], lbl: [130, 140, 165], val: [210, 215, 225], foot: [55, 62, 90] },
-        P: { bg: [248, 249, 252], hBg: [10, 18, 45], hTxt: [255, 255, 255], sBg: [232, 236, 248], sTxt: [20, 35, 90], body: [30, 35, 55], bullet: [40, 45, 70], bold: [10, 18, 45], fTxt: [150, 155, 175], div: [10, 18, 45] }
-      },
-      {
-        name: 'Forest Green',
-        dot: 'linear-gradient(135deg,#0c1e14,#50b478)',
-        C: { bg: [12, 30, 20], bar: [80, 180, 120], title: [225, 240, 230], accent: [80, 200, 130], lbl: [100, 140, 115], val: [200, 225, 210], foot: [50, 80, 60] },
-        P: { bg: [247, 251, 248], hBg: [18, 70, 40], hTxt: [220, 245, 230], sBg: [220, 240, 228], sTxt: [15, 70, 40], body: [30, 50, 38], bullet: [35, 60, 45], bold: [12, 55, 30], fTxt: [120, 160, 135], div: [18, 70, 40] }
-      },
-      {
-        name: 'Maroon University',
-        dot: 'linear-gradient(135deg,#26080e,#c3a064)',
-        C: { bg: [38, 8, 14], bar: [195, 160, 100], title: [245, 235, 215], accent: [210, 170, 100], lbl: [150, 110, 110], val: [235, 220, 200], foot: [90, 40, 50] },
-        P: { bg: [253, 250, 245], hBg: [120, 20, 35], hTxt: [255, 245, 230], sBg: [248, 235, 228], sTxt: [100, 15, 25], body: [45, 25, 28], bullet: [55, 30, 32], bold: [100, 15, 25], fTxt: [175, 140, 140], div: [120, 20, 35] }
-      },
-      {
-        name: 'Slate Tech',
-        dot: 'linear-gradient(135deg,#16181e,#eb6e28)',
-        C: { bg: [22, 24, 30], bar: [235, 110, 40], title: [235, 235, 240], accent: [235, 110, 40], lbl: [115, 120, 140], val: [210, 215, 225], foot: [60, 63, 78] },
-        P: { bg: [248, 248, 250], hBg: [38, 42, 55], hTxt: [240, 240, 245], sBg: [240, 235, 225], sTxt: [160, 75, 20], body: [38, 40, 52], bullet: [45, 47, 60], bold: [22, 24, 40], fTxt: [155, 158, 175], div: [38, 42, 55] }
-      },
-      {
-        name: 'Purple Elegant',
-        dot: 'linear-gradient(135deg,#120826,#be9beb)',
-        C: { bg: [18, 8, 38], bar: [180, 160, 220], title: [235, 230, 248], accent: [190, 155, 235], lbl: [130, 110, 165], val: [220, 215, 238], foot: [65, 48, 95] },
-        P: { bg: [250, 248, 255], hBg: [55, 25, 110], hTxt: [240, 235, 255], sBg: [238, 230, 255], sTxt: [60, 20, 120], body: [35, 25, 58], bullet: [45, 32, 70], bold: [45, 18, 95], fTxt: [165, 150, 195], div: [55, 25, 110] }
-      },
-      {
-        name: 'Teal Modern',
-        dot: 'linear-gradient(135deg,#082026,#20b9be)',
-        C: { bg: [8, 32, 38], bar: [32, 185, 190], title: [225, 242, 244], accent: [40, 195, 200], lbl: [85, 135, 140], val: [200, 228, 232], foot: [35, 78, 85] },
-        P: { bg: [246, 252, 253], hBg: [10, 90, 100], hTxt: [220, 248, 250], sBg: [215, 242, 244], sTxt: [8, 80, 90], body: [25, 50, 55], bullet: [30, 58, 62], bold: [8, 65, 75], fTxt: [120, 170, 175], div: [10, 90, 100] }
-      }
-    ];
+    /* ── Roll-number-based theme map (for UI reveal only) ── */
+    const THEME_MAP = {
+      '0': { name: 'Classic Navy', dot: 'linear-gradient(135deg,#0a1232,#d4af37)' },
+      '1': { name: 'Classic Navy', dot: 'linear-gradient(135deg,#0a1232,#d4af37)' },
+      '2': { name: 'Forest Green', dot: 'linear-gradient(135deg,#0c1e14,#50b478)' },
+      '3': { name: 'Forest Green', dot: 'linear-gradient(135deg,#0c1e14,#50b478)' },
+      '4': { name: 'Maroon University', dot: 'linear-gradient(135deg,#26080e,#c3a064)' },
+      '5': { name: 'Maroon University', dot: 'linear-gradient(135deg,#26080e,#c3a064)' },
+      '6': { name: 'Slate & Orange', dot: 'linear-gradient(135deg,#16181e,#eb6e28)' },
+      '7': { name: 'Slate & Orange', dot: 'linear-gradient(135deg,#16181e,#eb6e28)' },
+      '8': { name: 'Purple Elegant', dot: 'linear-gradient(135deg,#120826,#be9beb)' },
+      '9': { name: 'Teal Modern', dot: 'linear-gradient(135deg,#082026,#20b9be)' }
+    };
 
     /* ── Drag-drop ── */
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -821,7 +793,7 @@
       if (typeof n === 'number') [1, 2, 3, 4].forEach(i => { document.getElementById('si-' + i).classList.toggle('active', i === n); document.getElementById('si-' + i).classList.toggle('done', i < n) });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    function err(s, m) { const e = document.getElementById('e' + s); e.textContent = '⚠ ' + m; e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 4000) }
+    function err(s, m) { const e = document.getElementById('e' + s); e.textContent = '\u26a0 ' + m; e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 4000) }
     function g2() {
       const n = document.getElementById('sn').value.trim(), r = document.getElementById('sr').value.trim(), b = document.getElementById('sb').value.trim(), s = document.getElementById('ss').value.trim(), ins = document.getElementById('sinst').value.trim();
       if (!n || !r || !b || !s) { err(1, 'Please fill all required fields.'); return }
@@ -852,7 +824,7 @@
       rzp.open();
     }
 
-    /* ── Extract PDF ── */
+    /* ── Extract PDF text ── */
     async function xt(file) {
       const ab = await file.arrayBuffer(); const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
       let t = ''; for (let i = 1; i <= pdf.numPages; i++) { const pg = await pdf.getPage(i); const c = await pg.getTextContent(); t += c.items.map(s => s.str).join(' ') + '\n\n'; }
@@ -861,6 +833,13 @@
 
     /* ── Process step highlight ── */
     function ap(i) { [1, 2, 3, 4].forEach((n, idx) => { const el = document.getElementById('ps' + n); el.className = 'ps' + (idx < i ? ' ok' : idx === i ? ' on' : ''); }) }
+
+    /* ── Get theme from roll number (for UI reveal) ── */
+    function getThemeForRoll(roll) {
+      const digits = roll.replace(/\D/g, '');
+      const lastDigit = digits.length > 0 ? digits[digits.length - 1] : '0';
+      return THEME_MAP[lastDigit] || THEME_MAP['0'];
+    }
 
     /* ── Main solve ── */
     async function solve() {
@@ -877,132 +856,42 @@
         ap(2); const { solution } = await res.json();
         ap(3);
 
-        // Pick random theme HERE — locked in for this student's PDF
-        CHOSEN_THEME = THEMES[Math.floor(Math.random() * THEMES.length)];
-        PB = await mkPDF(SD, solution, CHOSEN_THEME);
+        // Store the HTML solution
+        HTML_SOLUTION = solution;
 
         document.querySelectorAll('.sp').forEach(p => p.classList.remove('active'));
         document.getElementById('step-done').classList.add('active');
         [1, 2, 3, 4].forEach(i => { document.getElementById('si-' + i).classList.add('done'); document.getElementById('si-' + i).classList.remove('active') });
 
-        // Show theme reveal
-        document.getElementById('tr-dot').style.background = CHOSEN_THEME.dot;
-        document.getElementById('tr-name').textContent = CHOSEN_THEME.name + ' Theme';
+        // Show theme reveal based on roll number
+        const theme = getThemeForRoll(SD.roll);
+        document.getElementById('tr-dot').style.background = theme.dot;
+        document.getElementById('tr-name').textContent = theme.name + ' Theme';
 
       } catch (e) { gs(3); err(3, e.message || 'Something went wrong.'); document.getElementById('payBtn').disabled = false; }
     }
 
-    /* ══════════════════════════════════════════════════════
-       PDF BUILDER — uses the chosen theme object
-    ══════════════════════════════════════════════════════ */
-    async function mkPDF(s, solution, T) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const W = 210, H = 297, M = 20, UW = 170;
-      const C = T.C, P = T.P;
-
-      /* ── COVER ── */
-      doc.setFillColor(...C.bg); doc.rect(0, 0, W, H, 'F');
-      doc.setFillColor(...C.bar); doc.rect(0, 0, 6, H, 'F');
-
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(30);
-      doc.setTextColor(...C.title);
-      doc.text(s.subject.toUpperCase(), M + 8, 55);
-
-      doc.setFontSize(14); doc.setTextColor(...C.accent);
-      doc.text('ASSIGNMENT SOLUTION', M + 8, 68);
-
-      doc.setDrawColor(...C.bar); doc.setLineWidth(.6);
-      doc.line(M + 8, 76, W - M, 76);
-
-      const fields = [['Name', s.name], ['Roll No.', s.roll], ['Batch', s.batch], ['Subject', s.subject], ['Institute', s.inst || '—'],
-      ['Date', new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })]];
-      fields.forEach(([l, v], i) => {
-        const y = 96 + i * 16;
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...C.lbl); doc.text(l + ':', M + 8, y);
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C.val); doc.text(v, M + 50, y);
-      });
-
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...C.foot);
-      doc.text('Quubit · Powered by Claude AI · For study reference only', W / 2, H - 12, { align: 'center' });
-
-      /* ── SOLUTION PAGES ── */
-      const nhdr = () => {
-        doc.addPage();
-        doc.setFillColor(...P.bg); doc.rect(0, 0, W, H, 'F');
-        doc.setFillColor(...P.hBg); doc.rect(0, 0, W, 14, 'F');
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-        doc.setTextColor(...P.hTxt);
-        doc.text(s.subject + '  ·  ' + s.name + '  ·  ' + s.roll, M, 9);
-      };
-      nhdr(); let cy = 26; const LH = 6.5, PB_ = H - 20;
-      const chk = (e = 0) => { if (cy + e > PB_) { nhdr(); cy = 26; } };
-
-      let inCodeBlock = false;
-      solution.split('\n').forEach(raw => {
-        const ln = raw.trim();
-
-        // Track fenced code blocks
-        if (ln.startsWith('```')) { inCodeBlock = !inCodeBlock; return; }
-
-        if (ln.startsWith('#') && !inCodeBlock) {
-          const t = ln.replace(/^#+\s*/, ''); cy += 4; chk(14);
-          doc.setFillColor(...P.sBg);
-          doc.roundedRect(M - 2, cy - 5, UW + 4, 10, 2, 2, 'F');
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...P.sTxt);
-          doc.text(t, M, cy); cy += LH + 4;
-
-        } else if (ln.startsWith('**') && ln.endsWith('**') && !inCodeBlock) {
-          const t = ln.replace(/\*\*/g, ''); chk(LH + 2);
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...P.bold);
-          doc.splitTextToSize(t, UW).forEach(w => { chk(); doc.text(w, M, cy); cy += LH; }); cy += 2;
-
-        } else if (/^[-•]/.test(ln) && !inCodeBlock) {
-          const t = '•  ' + ln.replace(/^[-•]\s*/, '');
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...P.bullet);
-          doc.splitTextToSize(t, UW - 6).forEach(w => { chk(); doc.text(w, M + 6, cy); cy += LH; });
-
-        } else if (ln === '') { cy += 3; }
-
-        else if (inCodeBlock || /^(module|endmodule|wire|reg|assign|nand|and|or|xor|not|always|initial|begin\b|end\b|input|output|\/\/|#[0-9]|\$)/.test(ln)) {
-          // Code line styling
-          chk(LH);
-          doc.setFillColor(...P.sBg);
-          doc.rect(M - 2, cy - 4.5, UW + 4, LH + 1, 'F');
-          doc.setFont('courier', 'normal'); doc.setFontSize(8.2); doc.setTextColor(...P.sTxt);
-          doc.splitTextToSize(ln, UW - 4).forEach(w => { chk(); doc.text(w, M + 2, cy); cy += LH; });
-
-        } else {
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...P.body);
-          doc.splitTextToSize(ln, UW).forEach(w => { chk(); doc.text(w, M, cy); cy += LH; });
-        }
-      });
-
-      /* ── PAGE NUMBERS ── */
-      const tot = doc.getNumberOfPages();
-      for (let p = 2; p <= tot; p++) {
-        doc.setPage(p);
-        doc.setDrawColor(...P.div); doc.setLineWidth(.2);
-        doc.line(M, H - 11, W - M, H - 11);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...P.fTxt);
-        doc.text('Page ' + p + ' of ' + tot, W - M, H - 8, { align: 'right' });
-        doc.text('Quubit · Study Reference Only', M, H - 8);
-      }
-      return doc.output('arraybuffer');
+    /* ── Preview in new tab ── */
+    function preview() {
+      if (!HTML_SOLUTION) return;
+      const w = window.open('', '_blank');
+      w.document.write(HTML_SOLUTION);
+      w.document.close();
     }
 
-    /* ── Download ── */
+    /* ── Download as HTML file (user prints to PDF from browser) ── */
     function dl() {
-      const blob = new Blob([PB], { type: 'application/pdf' });
+      if (!HTML_SOLUTION) return;
+      const blob = new Blob([HTML_SOLUTION], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = SD.roll + '_' + (SD.subject || 'Assignment').replace(/\s+/g, '_') + '_Solution.pdf';
+      a.href = url; a.download = SD.roll + '_' + (SD.subject || 'Assignment').replace(/\s+/g, '_') + '_Solution.html';
       a.click(); URL.revokeObjectURL(url);
     }
 
     /* ── Reset ── */
     function rst() {
-      PF = null; PT = ''; PB = null; SD = {}; CHOSEN_THEME = null;
+      PF = null; PT = ''; HTML_SOLUTION = null; SD = {};
       document.getElementById('fi').value = '';
       document.getElementById('finfo').style.display = 'none';
       ['sn', 'sr', 'sb', 'ss', 'sinst'].forEach(id => document.getElementById(id).value = '');

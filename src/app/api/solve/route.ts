@@ -2,23 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
 export async function POST(req: NextRequest) {
-    try {
-        const body = await req.json();
-        const { student, assignmentText } = body;
+  try {
+    const body = await req.json();
+    const { student, assignmentText } = body;
 
-        if (!student || !student.name || !student.roll || !student.batch || !student.subject || !assignmentText) {
-            return NextResponse.json(
-                { error: "Missing required fields" },
-                { status: 400 }
-            );
-        }
+    if (!student || !student.name || !student.roll || !student.batch || !student.subject || !assignmentText) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
 
-        // Initialize Gemini
-        const ai = new GoogleGenAI({ apiKey: "AIzaSyB15eBt1vNRMqJcmeIwjBVXKwh6fn2T2IA" });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === "PASTE_YOUR_NEW_GEMINI_API_KEY_HERE") {
+      return NextResponse.json(
+        { error: "Gemini API key not configured. Please set GEMINI_API_KEY in .env.local" },
+        { status: 500 }
+      );
+    }
 
-        const promptTemplate = `You are an expert Digital Design professor. Solve the student's assignment completely.
-Your response will be directly converted to a PDF and submitted — it must be 100% clean,
-professional, and publication-ready. Zero tolerance for messy output.
+    const ai = new GoogleGenAI({ apiKey });
+
+    // Compute last digit of roll number for theme selection
+    const rollDigits = student.roll.replace(/\D/g, "");
+    const lastDigit = rollDigits.length > 0 ? rollDigits[rollDigits.length - 1] : "0";
+
+    const promptTemplate = `You are an expert Digital Design professor. Solve the student's assignment completely.
+Your ENTIRE response must be a single, complete, valid HTML document with embedded CSS.
+Output NOTHING except the HTML — no explanation, no markdown, no preamble.
 
 STUDENT INFORMATION:
 - Name: {{STUDENT_NAME}}
@@ -30,201 +41,257 @@ STUDENT INFORMATION:
 ASSIGNMENT CONTENT:
 {{ASSIGNMENT_TEXT}}
 
-═══════════════════════════════════════════════
-ABSOLUTE RULES — VIOLATING ANY OF THESE IS NOT ALLOWED
-═══════════════════════════════════════════════
+════════════════════════════════════════
+THEME SELECTION RULE
+════════════════════════════════════════
+
+Take the last digit of the roll number: {{LAST_DIGIT_OF_ROLL}}
+
+Map it to a theme:
+  0, 1 → Theme A: Classic Navy      (cover: #0a1232, accent: #d4af37)
+  2, 3 → Theme B: Forest Green      (cover: #0c1e14, accent: #50b478)
+  4, 5 → Theme C: Maroon University (cover: #26080e, accent: #c3a064)
+  6, 7 → Theme D: Slate & Orange    (cover: #16181e, accent: #eb6e28)
+  8    → Theme E: Purple Elegant    (cover: #120826, accent: #be9beb)
+  9    → Theme F: Teal Modern       (cover: #082026, accent: #20b9be)
+
+Every student with a different last roll digit gets a completely different looking PDF.
+Use ONLY the selected theme's colors throughout the entire document.
+
+════════════════════════════════════════
+HTML DOCUMENT STRUCTURE — FOLLOW EXACTLY
+════════════════════════════════════════
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+
+/* === PAGE SETUP === */
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: [choose based on theme]; font-size: 11pt; }
+
+/* === COVER PAGE === */
+/* Full A4 dark page with left accent bar, student info grid, decorative circle */
+
+/* === PAGE HEADER === */
+/* Colored bar at top of every solution page showing: Subject · Name · Roll No. */
+
+/* === SECTION HEADINGS (## in solution) === */
+/* Pill-shaped colored background, left border in accent color */
+
+/* === QUESTION HEADINGS (**Question N:**) === */
+/* Slightly smaller, bold, accent color text, bottom border line */
+
+/* === TRUTH TABLES === */
+/* Full-width, striped rows, colored header row using theme header color */
+
+/* === VERILOG CODE BLOCKS === */
+/* Dark background, left accent border 4px, monospace font */
+
+/* === KEY CONCEPT BOXES === */
+/* Light accent background, left border, italic text, rounded corners */
+
+/* === PAGE FOOTER === */
+/* Fixed bottom: student name left, page number center, "Study Reference" right */
+
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <!-- Left accent bar (8px wide, full height, accent color) -->
+  <!-- Subject title large, "Assignment Solution" subtitle -->
+  <!-- Divider line in accent color -->
+  <!-- Student info grid: label | value for each field -->
+  <!-- Decorative circles bottom-right -->
+  <!-- Footer bar: "Quubit · Claude AI" -->
+</div>
+
+<!-- SOLUTION PAGES -->
+<div class="solution-body">
+  <!-- Page header bar -->
+  <!-- Content area with all solutions -->
+</div>
+
+</body>
+</html>
+
+════════════════════════════════════════
+FONT SELECTION PER THEME
+════════════════════════════════════════
+
+Theme A (Classic Navy)     → body: 'Georgia, serif'       mono: 'Courier New'
+Theme B (Forest Green)     → body: 'Palatino, serif'      mono: 'Courier New'
+Theme C (Maroon University)→ body: 'Times New Roman'      mono: 'Lucida Console'
+Theme D (Slate & Orange)   → body: 'Arial, sans-serif'    mono: 'Consolas'
+Theme E (Purple Elegant)   → body: 'Garamond, serif'      mono: 'Courier New'
+Theme F (Teal Modern)      → body: 'Trebuchet MS'         mono: 'Courier New'
+
+════════════════════════════════════════
+THEME COLOR VARIABLES — USE FOR ALL ELEMENTS
+════════════════════════════════════════
+
+For your selected theme, define and use these exact CSS custom property values.
+
+Theme A — Classic Navy:
+  --cover-bg:#0a1232 --cover-accent:#d4af37 --cover-text:#e6e1d2
+  --header-bg:#0a1232 --header-text:#ffffff --section-bg:#e8ecf8 --section-text:#14235a
+  --code-bg:#1e2a4a --code-text:#c8d8f8 --code-comment:#8a9e6a
+  --body-text:#1e2337 --page-bg:#f8f9fc --accent-line:#d4af37
+  --table-head-bg:#0a1232 --table-head-txt:#ffffff --table-even-bg:#edf0fa
+  --key-concept-bg:#e8ecf8
+
+Theme B — Forest Green:
+  --cover-bg:#0c1e14 --cover-accent:#50b478 --cover-text:#e1f0e6
+  --header-bg:#124628 --header-text:#dcf5e6 --section-bg:#daf0e4 --section-text:#0f4628
+  --code-bg:#0e2e1c --code-text:#a8e6c0 --code-comment:#6abf88
+  --body-text:#1e3226 --page-bg:#f7fbf8 --accent-line:#50b478
+  --table-head-bg:#124628 --table-head-txt:#dcf5e6 --table-even-bg:#e8f7ee
+  --key-concept-bg:#daf0e4
+
+Theme C — Maroon University:
+  --cover-bg:#26080e --cover-accent:#c3a064 --cover-text:#f5ead7
+  --header-bg:#78142a --header-text:#fff5e6 --section-bg:#f8ebe4 --section-text:#640f19
+  --code-bg:#2e0810 --code-text:#f0c8a0 --code-comment:#a08848
+  --body-text:#2d191c --page-bg:#fdfaf5 --accent-line:#c3a064
+  --table-head-bg:#78142a --table-head-txt:#fff5e6 --table-even-bg:#fdf0e8
+  --key-concept-bg:#f8ebe4
+
+Theme D — Slate & Orange:
+  --cover-bg:#16181e --cover-accent:#eb6e28 --cover-text:#ebebf0
+  --header-bg:#262a37 --header-text:#f0f0f5 --section-bg:#f0ebe1 --section-text:#a04b14
+  --code-bg:#1a1e2a --code-text:#ffd0a8 --code-comment:#a0b870
+  --body-text:#262834 --page-bg:#f8f8fa --accent-line:#eb6e28
+  --table-head-bg:#262a37 --table-head-txt:#f0f0f5 --table-even-bg:#f2efea
+  --key-concept-bg:#f0ebe1
+
+Theme E — Purple Elegant:
+  --cover-bg:#120826 --cover-accent:#be9beb --cover-text:#ebe6f8
+  --header-bg:#37196e --header-text:#f0ebff --section-bg:#eee6ff --section-text:#3c1278
+  --code-bg:#1a0e38 --code-text:#d4b8ff --code-comment:#8a9e6a
+  --body-text:#23193a --page-bg:#faf8ff --accent-line:#be9beb
+  --table-head-bg:#37196e --table-head-txt:#f0ebff --table-even-bg:#f4eeff
+  --key-concept-bg:#eee6ff
+
+Theme F — Teal Modern:
+  --cover-bg:#082026 --cover-accent:#20b9be --cover-text:#e1f2f4
+  --header-bg:#0a5a64 --header-text:#dcf8fa --section-bg:#d7f2f4 --section-text:#085864
+  --code-bg:#071e24 --code-text:#a0e8ec --code-comment:#70a878
+  --body-text:#19323a --page-bg:#f6fcfd --accent-line:#20b9be
+  --table-head-bg:#0a5a64 --table-head-txt:#dcf8fa --table-even-bg:#e8f9fa
+  --key-concept-bg:#d7f2f4
+
+════════════════════════════════════════
+CSS RULES — WRITE ALL OF THESE
+════════════════════════════════════════
+
+COVER PAGE:
+  - Full A4 height: height: 297mm; width: 210mm; overflow: hidden
+  - background: var(--cover-bg)
+  - Left accent bar: position absolute, width 8mm, height 100%, background: var(--cover-accent)
+  - Content starts at margin-left: 22mm
+  - Theme badge: small pill, border: 1px solid accent, color: accent, font-size 8pt, uppercase
+  - Subject title: font-size 30pt, font-weight bold, color: var(--cover-text)
+  - "ASSIGNMENT SOLUTION" subtitle: font-size 14pt, color: var(--cover-accent), letter-spacing 1px
+  - Horizontal divider: height 1px, background: linear-gradient(to right, accent, transparent)
+  - Student info: display grid, grid-template-columns: 130px 1fr
+  - Cover footer: position absolute bottom 0, full width, "Quubit . Powered by Claude AI"
+
+SOLUTION PAGES:
+  - background: var(--page-bg)
+  - Page header: background var(--header-bg), color var(--header-text)
+
+HEADINGS:
+  - background: var(--section-bg), color: var(--section-text)
+  - border-left: 4px solid var(--accent-line), border-radius: 0 6px 6px 0
+
+TRUTH TABLES:
+  - Full width, striped rows, colored header row, centered text
+
+VERILOG CODE BLOCKS:
+  - background: var(--code-bg), border-left: 4px solid accent
+  - Monospace font, syntax-colored comments
+
+KEY CONCEPT BOXES:
+  - background: var(--key-concept-bg), border-left: 4px solid accent, italic
+
+PAGE FOOTER:
+  - "Quubit" left, student info center, "Study Reference Only" right
+
+════════════════════════════════════════
+CONTENT RULES
+════════════════════════════════════════
 
 RULE 1 — NO THINKING OUT LOUD
-Never write your reasoning process, trial-and-error, self-corrections, or working notes
-anywhere in the output. The following types of lines are STRICTLY FORBIDDEN:
-  ✗ "Let's try...", "Wait, that's wrong...", "Let me reconsider..."
-  ✗ "This is not right.", "Actually...", "No, this is incorrect."
-  ✗ "A simpler approach would be...", "We can also use..."
-  ✗ Any comment that says something was wrong or is being corrected
-  ✗ Any line that shows you changing your mind mid-answer
-Only write the FINAL, CORRECT answer. Never show working doubts.
+Never write your reasoning process. No self-corrections mid-answer.
+Only write the FINAL correct answer.
 
-RULE 2 — VERILOG CODE MUST BE PERFECT
-  ✗ NEVER put reasoning, confusion, or trial-and-error inside code comments
-  ✗ NEVER declare wires or variables in the middle of the module — ALL wire/reg
-    declarations go at the TOP of the module, before any gate instantiations
-  ✗ NEVER write comments like "// this may not be right" or "// let's try this"
-  ✓ Every comment must be a clean, factual description of what that specific line does
-  ✓ Every module MUST have the student header block shown below
-  ✓ All signal names must be meaningful (not just w1, w2, w3... — use descriptive names
-    like xor_ab, borrow_a_not, etc.)
-
-RULE 3 — NO REDUNDANT DERIVATIONS
-  ✗ Do NOT repeat the same Boolean expression 4-5 times with minor changes
-  ✗ Do NOT show multiple failed simplification attempts
-  ✓ Show the derivation ONCE, cleanly, step by step to the final answer
-
-RULE 4 — NO FILLER TEXT
-  ✗ Do not start answers with "Great question!" or "Certainly!" or similar phrases
-  ✗ Do not repeat the question back before answering it
-
-═══════════════════════════════════════════════
-FORMATTING RULES
-═══════════════════════════════════════════════
-
-STRUCTURE:
-  ## Introduction
-  [2–3 sentences about the subject and what this assignment covers]
-
-  **Question [N]: [Title]**
-  [Complete solution]
-  **Key Concept:** [One clean sentence summarizing the core idea]
-
-  ## Conclusion
-  [2–3 sentence summary]
-
-TRUTH TABLES — use this exact format:
-  | A | B | Bin | D | Bout |
-  |---|---|-----|---|------|
-  | 0 | 0 |  0  | 0 |  0   |
-  (fill all rows completely, no skipping)
-
-BOOLEAN EXPRESSIONS:
-  - One expression per line
-  - Show simplification steps clearly and ONCE only
-  - Use plain text: A', A XOR B, A XNOR B (no LaTeX, no $...$ symbols)
-  - Example: Bout = A'B + A'Bin + BBin
-
-K-MAPS:
-  - State number of variables
-  - List minterms clearly
-  - Describe each group (pair/quad/octet) in ONE line each
-  - Write the final simplified expression
-
-VERILOG DESIGN MODULE — every module must follow this exact structure:
-
+RULE 2 — VERILOG CODE
+Every module header:
   // ============================================================
   // Module     : [module_name]
   // Student    : {{STUDENT_NAME}}
   // Roll No.   : {{ROLL_NUMBER}}
   // Batch      : {{BATCH}}
   // Subject    : {{SUBJECT}}
-  // Description: [one clean sentence describing the module]
+  // Description: [one clean sentence]
   // ============================================================
-  module module_name (
-      input  wire A,        // [what this input represents]
-      input  wire B,        // [what this input represents]
-      output wire D         // [what this output represents]
-  );
+All wire declarations at TOP. Descriptive names only (no w1, w2, w3).
 
-      // ── Wire Declarations ──────────────────────────────────
-      wire [descriptive_name];   // [what this wire carries]
-      wire [descriptive_name];   // [what this wire carries]
-      // (ALL wires declared here, before any logic)
+RULE 3 — NAND EQUIVALENTS (use directly)
+  NOT A    → nand(out, A, A)
+  A AND B  → wire t; nand(t,A,B); nand(out,t,t)
+  A OR B   → wire na,nb; nand(na,A,A); nand(nb,B,B); nand(out,na,nb)
+  A XOR B  → wire t,ta,tb; nand(t,A,B); nand(ta,A,t); nand(tb,B,t); nand(out,ta,tb)
 
-      // ── [Section Name e.g. "Difference Logic"] ─────────────
-      [gate instantiations with one-line comment each]
+RULE 4 — Complete tables, no rows missing.
+RULE 5 — No LaTeX. Plain text only.
 
-      // ── [Section Name e.g. "Borrow-out Logic"] ─────────────
-      [gate instantiations with one-line comment each]
+════════════════════════════════════════
+OUTPUT FORMAT
+════════════════════════════════════════
 
-  endmodule // end of module [module_name]
+Your output must be:
+  A complete, valid HTML file starting with <!DOCTYPE html>
+  All CSS embedded inside <style> tags
+  One cover page div, then all solution content
+  Nothing outside the HTML — no markdown, no explanation
+  Beautiful enough that a student would be proud to submit it`;
 
-VERILOG TESTBENCH — every testbench must follow this structure:
+    const finalPrompt = promptTemplate
+      .replace(/{{STUDENT_NAME}}/g, student.name)
+      .replace(/{{ROLL_NUMBER}}/g, student.roll)
+      .replace(/{{BATCH}}/g, student.batch)
+      .replace(/{{SUBJECT}}/g, student.subject)
+      .replace(/{{INSTITUTE}}/g, student.inst || '\u2014')
+      .replace(/{{LAST_DIGIT_OF_ROLL}}/g, lastDigit)
+      .replace('{{ASSIGNMENT_TEXT}}', assignmentText.substring(0, 8000));
 
-  // ============================================================
-  // Module     : tb_[module_name]
-  // Student    : {{STUDENT_NAME}}
-  // Roll No.   : {{ROLL_NUMBER}}
-  // Batch      : {{BATCH}}
-  // Subject    : {{SUBJECT}}
-  // Description: Testbench for [module_name]. Tests all [N] input combinations.
-  // ============================================================
-  module tb_[module_name];
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: finalPrompt
+    });
 
-      // ── Inputs ─────────────────────────────────────────────
-      reg A;    // [description]
+    let solution = response.text || "No solution generated.";
 
-      // ── Outputs ────────────────────────────────────────────
-      wire D;   // [description]
+    // Strip markdown code fences if Gemini wraps the HTML in them
+    solution = solution.replace(/^```html?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
 
-      // ── UUT Instantiation ───────────────────────────────────
-      [module_name] uut ( .A(A), .D(D) );
+    return NextResponse.json({
+      success: true,
+      solution: solution
+    });
 
-      // ── Test Vectors ────────────────────────────────────────
-      initial begin
-          $display("=== [Module Name] Testbench ===");
-          // [test cases with expected value comments]
-          $finish;
-      end
-
-      // ── Signal Monitor ──────────────────────────────────────
-      initial begin
-          $monitor("[format string]", $time, [signals]);
-      end
-
-  endmodule // end of module tb_[module_name]
-
-SIMULATION WAVEFORM TABLE — after every testbench, include:
-  | Time (ns) | A | B | [inputs] | D | [outputs] | Expected |
-  |-----------|---|---|----------|---|-----------|----------|
-  | [values for every test case] |
-  Then one line: "Output matches truth table — design verified. ✓"
-
-═══════════════════════════════════════════════
-NAND GATE IMPLEMENTATION RULES (IMPORTANT)
-═══════════════════════════════════════════════
-
-When implementing circuits using only NAND gates:
-
-1. First write the standard Boolean expressions (already known)
-2. Apply De Morgan's theorem ONCE to convert to NAND form, step by step
-3. Draw a clear gate-level diagram description (numbered gates, labeled wires)
-4. Then write the Verilog code using the EXACT structure above
-5. Use DESCRIPTIVE wire names:
-   ✓ nand_ab, not_a, xor_ab_intermediate, borrow_term1
-   ✗ w1, w2, w3, w4, w5
-
-Standard NAND equivalents (use these directly, do not re-derive them):
-  NOT A      →  nand(out, A, A)
-  A AND B    →  wire t; nand(t,A,B); nand(out,t,t)
-  A OR B     →  wire na,nb; nand(na,A,A); nand(nb,B,B); nand(out,na,nb)
-  A XOR B    →  wire t,ta,tb; nand(t,A,B); nand(ta,A,t); nand(tb,B,t); nand(out,ta,tb)
-
-═══════════════════════════════════════════════
-FINAL CHECKLIST (verify before writing output)
-═══════════════════════════════════════════════
-
-Before writing your response, confirm:
-  ☑ No reasoning leakage or self-corrections anywhere in the output
-  ☑ All wire declarations are at the TOP of every module
-  ☑ Every Verilog comment describes what the line DOES, not what you're "trying"
-  ☑ Boolean derivations shown cleanly, ONCE, no re-attempts
-  ☑ Student name {{STUDENT_NAME}} appears in every module header
-  ☑ All truth tables are complete with no rows missing
-  ☑ Simulation waveform table included after every testbench
-  ☑ No LaTeX, no dollar signs, no \\frac{} anywhere`;
-
-        const finalPrompt = promptTemplate
-            .replace(/{{STUDENT_NAME}}/g, student.name)
-            .replace(/{{ROLL_NUMBER}}/g, student.roll)
-            .replace(/{{BATCH}}/g, student.batch)
-            .replace(/{{SUBJECT}}/g, student.subject)
-            .replace(/{{INSTITUTE}}/g, student.inst || '—')
-            .replace('{{ASSIGNMENT_TEXT}}', assignmentText.substring(0, 8000));
-
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: finalPrompt
-        });
-
-        const solution = response.text || "No solution generated.";
-
-        return NextResponse.json({
-            success: true,
-            solution: solution
-        });
-
-    } catch (error) {
-        console.error("Error processing assignment:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
-    }
+  } catch (error) {
+    console.error("Error processing assignment:", error);
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
+  }
 }
