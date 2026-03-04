@@ -1481,6 +1481,22 @@
 
         HTML_SOLUTION = solution;
 
+        // [MOCK DB INJECTION START]
+        if (CURRENT_USER) {
+          try {
+            const db = JSON.parse(localStorage.getItem('quubit_mock_orders') || '[]');
+            db.push({
+              uid: CURRENT_USER.uid,
+              subject: SD.subject || 'Assignment',
+              fileName: SD.roll + '_' + (SD.subject || 'Assignment').replace(/\s+/g, '_') + '_Solution.pdf',
+              timestamp: new Date().toISOString(),
+              status: 'Generated ✅'
+            });
+            localStorage.setItem('quubit_mock_orders', JSON.stringify(db));
+          } catch (e) { console.error('Mock DB Write Error:', e); }
+        }
+        // [MOCK DB INJECTION END]
+
         // Move to download phase
         setTimeout(() => goPhase(4), 800);
 
@@ -1630,30 +1646,111 @@
     </div>
   </div>
 
-  <script>
-    /* ── Modal Triggers ── */
-    function openOrdersModal() {
-      const modal = document.getElementById('orders-modal');
-      const content = document.getElementById('orders-modal-content');
-      modal.style.display = 'flex';
-      // Small delay to allow display:flex to apply before animating opacity
-      setTimeout(() => {
-        modal.style.opacity = '1';
-        content.style.transform = 'translateY(0)';
-      }, 10);
+  /* ═══════════════════════════════════════
+  MOCK BACKEND (Local Storage Prototype)
+  ═══════════════════════════════════════ */
+  let CURRENT_USER = null;
 
-      // Future: Trigger Firebase fetch here
-    }
+  window.addEventListener('DOMContentLoaded', () => {
+  const storedUser = localStorage.getItem('quubit_mock_user');
+  if (storedUser) {
+  CURRENT_USER = JSON.parse(storedUser);
+  updateNavAuthState(true);
+  }
+  });
 
-    function closeOrdersModal() {
-      const modal = document.getElementById('orders-modal');
-      const content = document.getElementById('orders-modal-content');
-      modal.style.opacity = '0';
-      content.style.transform = 'translateY(20px)';
-      setTimeout(() => {
-        modal.style.display = 'none';
-      }, 300);
-    }
+  function mockGoogleSignIn() {
+  CURRENT_USER = {
+  uid: 'demo_user_' + Date.now(),
+  name: 'Demo Student',
+  email: 'student@university.edu'
+  };
+  localStorage.setItem('quubit_mock_user', JSON.stringify(CURRENT_USER));
+  updateNavAuthState(true);
+  }
+
+  function mockSignOut() {
+  CURRENT_USER = null;
+  localStorage.removeItem('quubit_mock_user');
+  updateNavAuthState(false);
+  closeOrdersModal();
+  }
+
+  function updateNavAuthState(isLoggedIn) {
+  document.getElementById('auth-logged-out').style.display = isLoggedIn ? 'none' : 'block';
+  document.getElementById('auth-logged-in').style.display = isLoggedIn ? 'flex' : 'none';
+  if (isLoggedIn) {
+  document.getElementById('nav-user-name').textContent = CURRENT_USER.name.split(' ')[0];
+  }
+  }
+
+  /* ── Modal Triggers & Order Fetching ── */
+  function openOrdersModal() {
+  const modal = document.getElementById('orders-modal');
+  const content = document.getElementById('orders-modal-content');
+  modal.style.display = 'flex';
+
+  const listContainer = document.getElementById('orders-list');
+
+  if (!CURRENT_USER) {
+  listContainer.innerHTML = '<div
+    style="text-align: center; color: var(--txt3); font-family: var(--font-mono); padding: 40px 0;">Please sign in to
+    view your orders.</div>';
+  } else {
+  const db = JSON.parse(localStorage.getItem('quubit_mock_orders') || '[]');
+  const userOrders = db.filter(o => o.uid === CURRENT_USER.uid).reverse();
+
+  if (userOrders.length === 0) {
+  listContainer.innerHTML = '<div
+    style="text-align: center; color: var(--txt3); font-family: var(--font-mono); padding: 40px 0;">No past orders
+    found.</div>';
+  } else {
+  listContainer.innerHTML = '';
+  userOrders.forEach(order => {
+  const item = document.createElement('div');
+  item.style.cssText = 'padding: 16px; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; background:
+  rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;';
+  const dateStr = new Date(order.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year:
+  'numeric' });
+  item.innerHTML = `
+  <div>
+    <div style="font-family: var(--font-head); font-size: 1.1rem; color: var(--txt);">${order.subject}</div>
+    <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--txt3); margin-top: 4px;">PDF:
+      ${order.fileName} &nbsp;·&nbsp; ${dateStr}</div>
+  </div>
+  <div
+    style="font-family: var(--font-mono); font-size: 0.7rem; color: #22c55e; border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); padding: 4px 10px; border-radius: 12px;">
+    ${order.status}
+  </div>
+  `;
+  listContainer.appendChild(item);
+  });
+  }
+
+  // Add Sign Out button to bottom of modal
+  const signOutBtn = document.createElement('div');
+  signOutBtn.style.cssText = 'margin-top: 24px; text-align: center; border-top: 1px solid var(--bdr); padding-top:
+  24px;';
+  signOutBtn.innerHTML = '<button class="btn btn-outline" onclick="mockSignOut()"
+    style="color: #ef4444; border-color: rgba(239,68,68,0.2);">Sign Out</button>';
+  listContainer.appendChild(signOutBtn);
+  }
+
+  setTimeout(() => {
+  modal.style.opacity = '1';
+  content.style.transform = 'translateY(0)';
+  }, 10);
+  }
+
+  function closeOrdersModal() {
+  const modal = document.getElementById('orders-modal');
+  const content = document.getElementById('orders-modal-content');
+  modal.style.opacity = '0';
+  content.style.transform = 'translateY(20px)';
+  setTimeout(() => {
+  modal.style.display = 'none';
+  }, 300);
+  }
   </script>
 </body>
 
