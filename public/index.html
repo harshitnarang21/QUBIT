@@ -1423,7 +1423,7 @@
     }
 
     /* ═══════════════════════════════════════
-       DOWNLOAD PDF
+       DOWNLOAD PDF (BULLETPROOF VISIBLE RENDER)
     ═══════════════════════════════════════ */
     async function dl() {
       if (!HTML_SOLUTION) return;
@@ -1431,7 +1431,46 @@
       btn.textContent = '⏳ Generating PDF...';
       btn.disabled = true;
 
+      // 1. Create a massive fullscreen overlay that blocks the view
+      //    We do this so we can render the PDF content visibly underneath it without the user seeing the messy switch
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:#000;color:#F97316;z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-size:32pt;font-weight:bold;flex-direction:column;';
+      overlay.innerHTML = '<div>GENERATING DOCUMENT...</div><div style="font-size:14pt;font-family:Inter,sans-serif;color:#888;margin-top:20px;letter-spacing:2px;animation:pulse 1.5s infinite;">PLEASE WAIT</div>';
+      document.body.appendChild(overlay);
+
+      await new Promise(r => setTimeout(r, 200));
+
       const filename = SD.roll + '_' + (SD.subject || 'Assignment').replace(/\s+/g, '_') + '_Solution.pdf';
+
+      // 2. Safely parse the HTML string
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(HTML_SOLUTION, 'text/html');
+
+      // 3. Create the container perfectly positioned at top left, but UNDER the overlay
+      //    It MUST be visible, opacity:1, display:block, and on-screen for html2canvas to not complain
+      const container = document.createElement('div');
+      container.id = 'pdf-render-zone';
+      container.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;z-index:9999998;transform-origin:top left;';
+
+      // Copy styles
+      const styles = doc.querySelectorAll('style');
+      styles.forEach(s => {
+        const newStyle = document.createElement('style');
+        newStyle.textContent = s.textContent;
+        container.appendChild(newStyle);
+      });
+
+      // Copy body content
+      container.innerHTML += doc.body.innerHTML;
+
+      // We must append to body directly
+      document.body.appendChild(container);
+
+      // Scroll to exactly 0,0 so hw acceleration captures it perfectly
+      window.scrollTo(0, 0);
+
+      // Wait for fonts & DOM reflow
+      await new Promise(r => setTimeout(r, 1500));
 
       const opt = {
         margin: 0,
@@ -1440,26 +1479,28 @@
         html2canvas: {
           scale: 2,
           useCORS: true,
-          logging: false
+          logging: false,
+          scrollY: 0
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['legacy'] } // css mode sometimes breaks string parsing
+        pagebreak: { mode: ['css', 'legacy'] }
       };
 
       try {
-        // Pass the raw HTML string directly to html2pdf.
-        // It handles parsing and iframe injection internally, which is much safer.
-        await html2pdf().set(opt).from(HTML_SOLUTION).save();
+        await html2pdf().set(opt).from(container).save();
       } catch (e) {
-        console.error("PDF Generation failed:", e);
-        // Fallback: download as HTML file ONLY if html2pdf critically fails
+        console.error("PDF engine crash:", e);
+        // Fallback only if catastrophic failure
         const blob = new Blob([HTML_SOLUTION], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url; a.download = filename.replace('.pdf', '.html');
         a.click(); URL.revokeObjectURL(url);
-        alert('PDF generation engine failed. Downloading fallback HTML format instead.');
       }
+
+      // 4. Cleanup everything
+      document.body.removeChild(container);
+      document.body.removeChild(overlay);
 
       btn.textContent = '⬇ Download PDF';
       btn.disabled = false;
