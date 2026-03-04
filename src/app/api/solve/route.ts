@@ -55,7 +55,6 @@ Map it to a theme:
   8    → Theme E: Purple Elegant    (cover: #120826, accent: #be9beb)
   9    → Theme F: Teal Modern       (cover: #082026, accent: #20b9be)
 
-Every student with a different last roll digit gets a completely different looking PDF.
 Use ONLY the selected theme's colors throughout the entire document.
 
 ════════════════════════════════════════
@@ -69,12 +68,17 @@ HTML DOCUMENT STRUCTURE — FOLLOW EXACTLY
 <style>
 
 /* === PAGE SETUP === */
-@page { size: A4; margin: 0; }
+@page { size: A4; margin: 15mm 15mm 20mm 15mm; }
+@media print {
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cover { page-break-after: always; }
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: [choose based on theme]; font-size: 11pt; }
 
 /* === COVER PAGE === */
 /* Full A4 dark page with left accent bar, student info grid, decorative circle */
+/* height: 297mm; width: 210mm; position: relative; overflow: hidden */
 
 /* === PAGE HEADER === */
 /* Colored bar at top of every solution page showing: Subject · Name · Roll No. */
@@ -94,8 +98,7 @@ body { font-family: [choose based on theme]; font-size: 11pt; }
 /* === KEY CONCEPT BOXES === */
 /* Light accent background, left border, italic text, rounded corners */
 
-/* === PAGE FOOTER === */
-/* Fixed bottom: student name left, page number center, "Study Reference" right */
+/* NO PAGE FOOTER. Do NOT include any footer element. */
 
 </style>
 </head>
@@ -108,13 +111,13 @@ body { font-family: [choose based on theme]; font-size: 11pt; }
   <!-- Divider line in accent color -->
   <!-- Student info grid: label | value for each field -->
   <!-- Decorative circles bottom-right -->
-  <!-- Footer bar: "Quubit · Claude AI" -->
+  <!-- NO footer. NO branding. NO theme name. -->
 </div>
 
 <!-- SOLUTION PAGES -->
 <div class="solution-body">
   <!-- Page header bar -->
-  <!-- Content area with all solutions -->
+  <!-- Jump straight into solving questions. Do NOT write assignment objectives. -->
 </div>
 
 </body>
@@ -194,12 +197,12 @@ COVER PAGE:
   - background: var(--cover-bg)
   - Left accent bar: position absolute, width 8mm, height 100%, background: var(--cover-accent)
   - Content starts at margin-left: 22mm
-  - Theme badge: small pill, border: 1px solid accent, color: accent, font-size 8pt, uppercase
+  - DO NOT include any theme badge or theme name anywhere
   - Subject title: font-size 30pt, font-weight bold, color: var(--cover-text)
   - "ASSIGNMENT SOLUTION" subtitle: font-size 14pt, color: var(--cover-accent), letter-spacing 1px
   - Horizontal divider: height 1px, background: linear-gradient(to right, accent, transparent)
   - Student info: display grid, grid-template-columns: 130px 1fr
-  - Cover footer: position absolute bottom 0, full width, "Quubit . Powered by Claude AI"
+  - NO cover footer. NO branding text of any kind.
 
 SOLUTION PAGES:
   - background: var(--page-bg)
@@ -219,8 +222,9 @@ VERILOG CODE BLOCKS:
 KEY CONCEPT BOXES:
   - background: var(--key-concept-bg), border-left: 4px solid accent, italic
 
-PAGE FOOTER:
-  - "Quubit" left, student info center, "Study Reference Only" right
+NO FOOTER:
+  - Do NOT include any footer element.
+  - Do NOT write any branding, product names, AI credits, theme names, or "study reference" text anywhere.
 
 ════════════════════════════════════════
 CONTENT RULES
@@ -230,7 +234,11 @@ RULE 1 — NO THINKING OUT LOUD
 Never write your reasoning process. No self-corrections mid-answer.
 Only write the FINAL correct answer.
 
-RULE 2 — VERILOG CODE
+RULE 2 — NO ASSIGNMENT OBJECTIVES
+Do NOT include any "Assignment Objectives" or "Learning Objectives" section.
+Jump straight into solving the questions.
+
+RULE 3 — VERILOG CODE
 Every module header:
   // ============================================================
   // Module     : [module_name]
@@ -242,14 +250,26 @@ Every module header:
   // ============================================================
 All wire declarations at TOP. Descriptive names only (no w1, w2, w3).
 
-RULE 3 — NAND EQUIVALENTS (use directly)
+RULE 4 — NAND EQUIVALENTS (use directly)
   NOT A    → nand(out, A, A)
   A AND B  → wire t; nand(t,A,B); nand(out,t,t)
   A OR B   → wire na,nb; nand(na,A,A); nand(nb,B,B); nand(out,na,nb)
   A XOR B  → wire t,ta,tb; nand(t,A,B); nand(ta,A,t); nand(tb,B,t); nand(out,ta,tb)
 
-RULE 4 — Complete tables, no rows missing.
-RULE 5 — No LaTeX. Plain text only.
+RULE 5 — Complete tables, no rows missing.
+RULE 6 — No LaTeX. Plain text only.
+
+════════════════════════════════════════
+ABSOLUTELY FORBIDDEN CONTENT
+════════════════════════════════════════
+Do NOT include ANY of the following anywhere in the HTML output:
+  ✗ Any product name, brand name, or company name
+  ✗ "Powered by" credits of any kind
+  ✗ "Study reference only" or similar disclaimers
+  ✗ Theme name display (no "Classic Navy", "Forest Green", etc.)
+  ✗ "Assignment Objectives" or "Learning Objectives" section
+  ✗ Any footer bar with branding
+  ✗ Any AI attribution
 
 ════════════════════════════════════════
 OUTPUT FORMAT
@@ -260,6 +280,7 @@ Your output must be:
   All CSS embedded inside <style> tags
   One cover page div, then all solution content
   Nothing outside the HTML — no markdown, no explanation
+  The HTML must render perfectly when printed to PDF from a browser (Ctrl+P / Save as PDF)
   Beautiful enough that a student would be proud to submit it`;
 
     const finalPrompt = promptTemplate

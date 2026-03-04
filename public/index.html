@@ -9,7 +9,7 @@
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
     rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <!-- jsPDF removed: Gemini now outputs complete styled HTML -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     :root {
@@ -706,7 +706,7 @@
         <div class="pr tot"><span>Total</span><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">₹
             10.00</span></div>
       </div>
-      <button class="btn bg" id="payBtn" onclick="pay()">🔒 Pay ₹10 &amp; Get Solution</button>
+      <button class="btn bg" id="payBtn" onclick="pay()">⚡ Bypass Payment &amp; Get Solution</button>
       <button class="btn bgh" onclick="gs(2)">← Back</button>
     </div>
 
@@ -727,16 +727,9 @@
     <div class="sp" id="step-done">
       <div class="okr">✅</div>
       <div class="ct">Solution Ready!</div>
-      <div class="cs" style="margin-bottom:8px">Your assignment solution is ready with a unique theme based on your roll
-        number.</div>
-      <div class="theme-reveal" id="theme-reveal">
-        <div class="tr-dot" id="tr-dot"></div>
-        <div class="tr-info">
-          <div class="tr-name" id="tr-name">—</div>
-          <div class="tr-sub">Your unique PDF theme (based on roll number)</div>
-        </div>
+      <div class="cs" style="margin-bottom:8px">Your assignment solution has been generated as a professional A4 PDF.
       </div>
-      <button class="btn bgr" onclick="dl()">⬇ Download Solution (HTML → Print to PDF)</button>
+      <button class="btn bgr" onclick="dl()">⬇ Download Solution PDF</button>
       <button class="btn bg" onclick="preview()" style="margin-top:10px">👁 Preview in New Tab</button>
       <button class="btn bgh" onclick="rst()">Solve Another →</button>
     </div>
@@ -809,19 +802,8 @@
 
     /* ── Payment ── */
     function pay() {
-      if (RK === 'YOUR_RAZORPAY_KEY_ID') {
-        if (!confirm('DEV MODE: No Razorpay key. Proceed without payment for testing?')) return;
-        solve(); return;
-      }
-      document.getElementById('payBtn').disabled = true;
-      const opts = {
-        key: RK, amount: 1000, currency: 'INR', name: 'Quubit', description: SD.subject + ' Solution',
-        handler: () => solve(), prefill: { name: SD.name }, theme: { color: '#c9922a' },
-        modal: { ondismiss: () => document.getElementById('payBtn').disabled = false }
-      };
-      const rzp = new Razorpay(opts);
-      rzp.on('payment.failed', () => { err(3, 'Payment failed. Please try again.'); document.getElementById('payBtn').disabled = false });
-      rzp.open();
+      // DEV MODE: BYPASS PAYMENT
+      solve(); return;
     }
 
     /* ── Extract PDF text ── */
@@ -863,11 +845,6 @@
         document.getElementById('step-done').classList.add('active');
         [1, 2, 3, 4].forEach(i => { document.getElementById('si-' + i).classList.add('done'); document.getElementById('si-' + i).classList.remove('active') });
 
-        // Show theme reveal based on roll number
-        const theme = getThemeForRoll(SD.roll);
-        document.getElementById('tr-dot').style.background = theme.dot;
-        document.getElementById('tr-name').textContent = theme.name + ' Theme';
-
       } catch (e) { gs(3); err(3, e.message || 'Something went wrong.'); document.getElementById('payBtn').disabled = false; }
     }
 
@@ -879,14 +856,50 @@
       w.document.close();
     }
 
-    /* ── Download as HTML file (user prints to PDF from browser) ── */
-    function dl() {
+    /* ── Download as proper A4 PDF ── */
+    async function dl() {
       if (!HTML_SOLUTION) return;
-      const blob = new Blob([HTML_SOLUTION], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = SD.roll + '_' + (SD.subject || 'Assignment').replace(/\s+/g, '_') + '_Solution.html';
-      a.click(); URL.revokeObjectURL(url);
+      const btn = document.querySelector('.bgr');
+      btn.textContent = '⏳ Generating PDF...';
+      btn.disabled = true;
+
+      // Create a hidden iframe to render the HTML
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;';
+      document.body.appendChild(iframe);
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(HTML_SOLUTION);
+      iframe.contentDocument.close();
+
+      // Wait for content to render
+      await new Promise(r => setTimeout(r, 1500));
+
+      const element = iframe.contentDocument.body;
+      const filename = SD.roll + '_' + (SD.subject || 'Assignment').replace(/\s+/g, '_') + '_Solution.pdf';
+
+      const opt = {
+        margin: 0,
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, width: element.scrollWidth, windowWidth: element.scrollWidth },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      };
+
+      try {
+        await html2pdf().set(opt).from(element).save();
+      } catch (e) {
+        // Fallback: download as HTML
+        const blob = new Blob([HTML_SOLUTION], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename.replace('.pdf', '.html');
+        a.click(); URL.revokeObjectURL(url);
+      }
+
+      document.body.removeChild(iframe);
+      btn.textContent = '\u2b07 Download Solution PDF';
+      btn.disabled = false;
     }
 
     /* ── Reset ── */
