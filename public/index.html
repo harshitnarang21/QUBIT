@@ -4,24 +4,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quubit — Digital Design Assignment Helper</title>
+  <title>Quubit — AI Assignment Solver</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
+    /* ═══════════════════════════════════════
+       DESIGN SYSTEM
+    ═══════════════════════════════════════ */
     :root {
-      --bg: #0b0d11;
-      --sur: #13161d;
-      --bdr: #222632;
-      --gld: #c9922a;
-      --glt: #e8b45a;
-      --txt: #ede9e0;
-      --mut: #7a7a8c;
-      --grn: #2ec99a;
-      --rad: 14px
+      --bg: #000000;
+      --sur: #0a0a0a;
+      --sur2: #111111;
+      --bdr: #1a1a1a;
+      --accent: #F97316;
+      --accent2: #fb923c;
+      --txt: #ffffff;
+      --txt2: #aaaaaa;
+      --txt3: #666666;
+      --font-head: 'Oswald', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     *,
@@ -29,744 +37,1249 @@
     *::after {
       box-sizing: border-box;
       margin: 0;
-      padding: 0
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
       background: var(--bg);
       color: var(--txt);
-      font-family: 'DM Sans', sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      cursor: default;
     }
 
-    body::before {
-      content: '';
+    ::selection {
+      background: var(--accent);
+      color: #000;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* ═══════════════════════════════════════
+       SCROLL ANIMATIONS
+    ═══════════════════════════════════════ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(60px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-60px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal-left.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .reveal-right {
+      opacity: 0;
+      transform: translateX(60px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal-right.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ═══════════════════════════════════════
+       HEADER / NAV
+    ═══════════════════════════════════════ */
+    nav {
       position: fixed;
-      inset: 0;
-      background: radial-gradient(ellipse 60% 50% at 20% 10%, rgba(201, 146, 42, .07) 0%, transparent 60%), radial-gradient(ellipse 40% 60% at 80% 80%, rgba(46, 201, 154, .04) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0
-    }
-
-    header {
-      position: relative;
-      z-index: 10;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 22px 48px;
-      border-bottom: 1px solid var(--bdr)
+      padding: 24px 48px;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.9rem;
+    .nav-logo {
+      font-family: var(--font-head);
+      font-size: 1.4rem;
       font-weight: 700;
-      color: var(--txt)
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--txt);
     }
 
-    .logo span {
-      color: var(--gld)
+    .nav-logo span {
+      color: var(--accent);
     }
 
-    .badge {
-      background: rgba(201, 146, 42, .12);
-      border: 1px solid rgba(201, 146, 42, .3);
-      color: var(--glt);
-      padding: 5px 14px;
-      border-radius: 100px;
-      font-size: .75rem;
-      font-weight: 500;
-      letter-spacing: .5px
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--txt3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
+    .nav-status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--sur2);
+      border: 1px solid var(--bdr);
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--txt2);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .nav-menu:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ═══════════════════════════════════════
+       HERO SECTION
+    ═══════════════════════════════════════ */
     .hero {
       position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 64px 24px 48px
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 120px 48px 48px;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -20%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .hero-label-line {
+      width: 60px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .hero-label-text {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-style: italic;
+      color: var(--accent);
+      letter-spacing: 0.5px;
     }
 
     .hero h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-family: var(--font-head);
+      font-size: clamp(3.5rem, 9vw, 8rem);
       font-weight: 700;
-      line-height: 1.1;
-      margin-bottom: 16px
+      text-transform: uppercase;
+      line-height: 0.95;
+      letter-spacing: -2px;
+      max-width: 900px;
     }
 
     .hero h1 em {
-      color: var(--gld);
-      font-style: normal
-    }
-
-    .hero p {
-      color: var(--mut);
-      font-size: 1.05rem;
-      max-width: 480px;
-      margin: 0 auto;
-      line-height: 1.65
-    }
-
-    .swrap {
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      margin: 48px 0;
+      font-style: normal;
+      color: var(--accent);
+      display: inline-block;
       position: relative;
-      z-index: 1
     }
 
-    .si {
+    .hero h1 .outline {
+      -webkit-text-stroke: 2px var(--txt);
+      color: transparent;
+    }
+
+    .hero-sub {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+      color: var(--txt2);
+      margin-top: 8px;
+      font-weight: 300;
+    }
+
+    .hero-bottom {
+      position: absolute;
+      bottom: 32px;
+      left: 48px;
+      right: 48px;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hero-available {
+      display: flex;
       align-items: center;
       gap: 8px;
-      position: relative
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--txt3);
     }
 
-    .si:not(:last-child) {
-      margin-right: 80px
+    .hero-available::before {
+      content: '●';
+      color: var(--accent);
+      font-size: 0.5rem;
     }
 
-    .si:not(:last-child)::after {
-      content: '';
+    .hero-scroll {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--txt3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-scroll::after {
+      content: '↓';
+      color: var(--accent);
+      font-size: 1rem;
+      animation: bounce-arrow 1.5s infinite;
+    }
+
+    @keyframes bounce-arrow {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(6px);
+      }
+    }
+
+    /* Rotating circle */
+    .hero-circle {
       position: absolute;
-      top: 17px;
-      left: calc(50% + 18px);
-      width: 80px;
-      height: 1px;
-      background: var(--bdr);
-      transition: background .4s
+      right: 80px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 160px;
+      height: 160px;
     }
 
-    .si.done:not(:last-child)::after {
-      background: var(--gld)
+    .hero-circle-text {
+      width: 160px;
+      height: 160px;
+      animation: spin-slow 12s linear infinite;
+      position: absolute;
     }
 
-    .sdot {
-      width: 36px;
-      height: 36px;
+    .hero-circle-text text {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      fill: var(--txt3);
+    }
+
+    .hero-circle-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      background: var(--accent);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid var(--bdr);
-      background: var(--sur);
-      font-size: .82rem;
-      font-weight: 600;
-      color: var(--mut);
-      transition: all .35s
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
     }
 
-    .si.active .sdot {
-      border-color: var(--gld);
-      color: var(--gld);
-      background: rgba(201, 146, 42, .1);
-      box-shadow: 0 0 0 4px rgba(201, 146, 42, .1)
+    .hero-circle-center:hover {
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 0 30px rgba(249, 115, 22, 0.4);
     }
 
-    .si.done .sdot {
-      border-color: var(--gld);
-      background: var(--gld);
-      color: #000
+    @keyframes spin-slow {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
-    .slbl {
-      font-size: .72rem;
-      color: var(--mut);
+    /* ═══════════════════════════════════════
+       MARQUEE
+    ═══════════════════════════════════════ */
+    .marquee-wrap {
+      background: var(--accent);
+      padding: 16px 0;
+      overflow: hidden;
       white-space: nowrap;
+    }
+
+    .marquee-track {
+      display: inline-flex;
+      animation: marquee-scroll 20s linear infinite;
+    }
+
+    .marquee-track span {
+      font-family: var(--font-head);
+      font-size: 1.3rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: .5px
+      letter-spacing: 3px;
+      color: #000;
+      padding: 0 24px;
     }
 
-    .si.active .slbl {
-      color: var(--glt)
+    @keyframes marquee-scroll {
+      0% {
+        transform: translateX(0);
+      }
+
+      100% {
+        transform: translateX(-50%);
+      }
     }
 
-    .card {
+    /* ═══════════════════════════════════════
+       SECTIONS (SHARED)
+    ═══════════════════════════════════════ */
+    .section {
+      padding: 120px 48px;
       position: relative;
-      z-index: 1;
-      background: var(--sur);
-      border: 1px solid var(--bdr);
-      border-radius: var(--rad);
-      padding: 40px;
-      max-width: 600px;
-      margin: 0 auto 80px;
-      box-shadow: 0 24px 64px rgba(0, 0, 0, .4)
     }
 
-    .ct {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.65rem;
-      font-weight: 600;
-      margin-bottom: 6px
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 48px;
     }
 
-    .cs {
-      color: var(--mut);
-      font-size: .875rem;
-      margin-bottom: 32px;
-      line-height: 1.5
-    }
-
-    .frow {
+    /* ═══════════════════════════════════════
+       BEYOND SECTION
+    ═══════════════════════════════════════ */
+    .beyond {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px
+      gap: 80px;
+      align-items: center;
+      border-top: 1px solid var(--bdr);
     }
 
-    .fld {
-      margin-bottom: 20px
-    }
-
-    .fld label {
-      display: block;
-      font-size: .78rem;
-      font-weight: 500;
-      color: var(--mut);
-      margin-bottom: 8px;
+    .beyond-title {
+      font-family: var(--font-head);
+      font-size: clamp(3rem, 6vw, 5.5rem);
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: .5px
+      line-height: 1;
     }
 
-    .fld input {
-      width: 100%;
-      padding: 13px 16px;
-      background: rgba(255, 255, 255, .04);
-      border: 1px solid var(--bdr);
-      border-radius: 10px;
+    .beyond-title em {
+      font-style: italic;
+      color: var(--accent);
+      font-family: 'Georgia', serif;
+    }
+
+    .beyond-text {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--txt2);
+      max-width: 440px;
+    }
+
+    .beyond-text strong {
       color: var(--txt);
-      font-family: 'DM Sans', sans-serif;
-      font-size: .95rem;
-      outline: none;
-      transition: border-color .2s, box-shadow .2s
     }
 
-    .fld input:focus {
-      border-color: var(--gld);
-      box-shadow: 0 0 0 3px rgba(201, 146, 42, .12)
-    }
-
-    .uz {
-      border: 2px dashed var(--bdr);
-      border-radius: 12px;
-      padding: 48px 24px;
-      text-align: center;
+    .beyond-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 32px;
+      padding: 0;
+      border: none;
+      background: none;
       cursor: pointer;
-      transition: all .25s;
-      position: relative
     }
 
-    .uz:hover,
-    .uz.drag {
-      border-color: var(--gld);
-      background: rgba(201, 146, 42, .04)
+    .beyond-cta-arrow {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--bdr);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--txt3);
+      font-size: 0.8rem;
+      transition: all 0.3s;
     }
 
-    .uz input[type="file"] {
+    .beyond-cta:hover .beyond-cta-arrow {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(249, 115, 22, 0.1);
+    }
+
+    .beyond-cta-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--txt3);
+      transition: color 0.3s;
+    }
+
+    .beyond-cta:hover .beyond-cta-label {
+      color: var(--accent);
+    }
+
+    /* ═══════════════════════════════════════
+       MANIFESTO
+    ═══════════════════════════════════════ */
+    .manifesto {
+      border-top: 1px solid var(--bdr);
+      padding: 160px 48px;
+    }
+
+    .manifesto p {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 4.5vw, 3.8rem);
+      font-weight: 500;
+      text-transform: uppercase;
+      line-height: 1.15;
+      color: var(--txt3);
+      max-width: 1100px;
+    }
+
+    .manifesto p strong {
+      color: var(--txt);
+      font-weight: 700;
+    }
+
+    /* ═══════════════════════════════════════
+       PHASES / PROCESS
+    ═══════════════════════════════════════ */
+    .phases {
+      border-top: 1px solid var(--bdr);
+    }
+
+    .phase {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 48px;
+      position: relative;
+      border-bottom: 1px solid var(--bdr);
+    }
+
+    .phase-number {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .phase-title {
+      font-family: var(--font-head);
+      font-size: clamp(3rem, 7vw, 6rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .phase-desc {
+      color: var(--txt3);
+      font-size: 0.95rem;
+      margin-bottom: 48px;
+      max-width: 500px;
+    }
+
+    /* ═══════════════════════════════════════
+       FORMS & INPUTS (inside phases)
+    ═══════════════════════════════════════ */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 640px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-field label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--txt3);
+    }
+
+    .form-field input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--sur2);
+      border: 1px solid var(--bdr);
+      border-radius: 4px;
+      color: var(--txt);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .form-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    }
+
+    .form-field input::placeholder {
+      color: var(--txt3);
+    }
+
+    /* Upload zone */
+    .upload-zone {
+      max-width: 640px;
+      border: 2px dashed var(--bdr);
+      border-radius: 8px;
+      padding: 60px 32px;
+      text-align: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.drag {
+      border-color: var(--accent);
+      background: rgba(249, 115, 22, 0.03);
+    }
+
+    .upload-zone input[type="file"] {
       position: absolute;
       inset: 0;
       opacity: 0;
       cursor: pointer;
       width: 100%;
-      height: 100%
+      height: 100%;
     }
 
-    .uic {
-      width: 56px;
-      height: 56px;
-      background: rgba(201, 146, 42, .1);
-      border: 1px solid rgba(201, 146, 42, .2);
+    .upload-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      border: 1px solid var(--bdr);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 16px;
-      font-size: 1.6rem
+      font-size: 1.8rem;
+      background: var(--sur2);
     }
 
-    .uz h3 {
-      font-size: 1rem;
-      font-weight: 500;
-      margin-bottom: 6px
+    .upload-zone h3 {
+      font-family: var(--font-head);
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
     }
 
-    .uz p {
-      color: var(--mut);
-      font-size: .85rem
+    .upload-zone p {
+      color: var(--txt3);
+      font-size: 0.85rem;
     }
 
-    .ftag {
+    .file-tag {
       display: flex;
       align-items: center;
       gap: 12px;
-      background: rgba(46, 201, 154, .08);
-      border: 1px solid rgba(46, 201, 154, .2);
-      border-radius: 10px;
+      background: rgba(249, 115, 22, 0.08);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 6px;
       padding: 14px 16px;
-      margin-top: 16px
+      margin-top: 20px;
+      max-width: 640px;
     }
 
-    .pbox {
-      background: rgba(255, 255, 255, .03);
+    /* Payment summary */
+    .pay-box {
+      background: var(--sur2);
       border: 1px solid var(--bdr);
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 24px;
-      margin-bottom: 24px
+      max-width: 500px;
+      margin-bottom: 24px;
     }
 
-    .pr {
+    .pay-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding: 10px 0
+      padding: 10px 0;
+      font-size: 0.9rem;
+      color: var(--txt2);
     }
 
-    .pr+.pr {
-      border-top: 1px solid var(--bdr)
+    .pay-row+.pay-row {
+      border-top: 1px solid var(--bdr);
     }
 
-    .pr.tot {
+    .pay-row.total {
       font-weight: 600;
-      color: var(--glt)
+      color: var(--accent);
+      font-size: 1rem;
     }
 
-    /* theme preview chips */
-    .theme-preview {
+    /* Processing */
+    .proc-steps {
+      max-width: 500px;
+    }
+
+    .proc-step {
       display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      flex-wrap: wrap
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--bdr);
+      font-size: 0.9rem;
+      color: var(--txt3);
+      transition: color 0.4s;
     }
 
-    .tchip {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, .2);
-      cursor: default;
-      position: relative
-    }
-
-    .tchip::after {
-      content: attr(data-name);
-      position: absolute;
-      bottom: calc(100% + 6px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1a1d26;
+    .proc-step.on {
       color: var(--txt);
-      font-size: .7rem;
-      padding: 3px 8px;
-      border-radius: 4px;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s
     }
 
-    .tchip:hover::after {
-      opacity: 1
+    .proc-step.ok {
+      color: #22c55e;
     }
 
-    .tlabel {
-      font-size: .78rem;
-      color: var(--mut);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: .5px
-    }
-
-    .btn {
-      width: 100%;
-      padding: 15px;
-      border: none;
-      border-radius: 10px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: .95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px
-    }
-
-    .bg {
-      background: linear-gradient(135deg, #c9922a, #a87020);
-      color: #fff;
-      box-shadow: 0 4px 20px rgba(201, 146, 42, .3)
-    }
-
-    .bg:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 28px rgba(201, 146, 42, .4)
-    }
-
-    .bgh {
-      background: transparent;
-      border: 1px solid var(--bdr);
-      color: var(--mut);
-      margin-top: 10px
-    }
-
-    .bgh:hover {
-      border-color: var(--mut);
-      color: var(--txt)
-    }
-
-    .btn:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-      transform: none !important
-    }
-
-    .bgr {
-      background: linear-gradient(135deg, #2ec99a, #1a9b74);
-      color: #fff;
-      box-shadow: 0 4px 20px rgba(46, 201, 154, .25);
-      margin-top: 24px
-    }
-
-    .bgr:hover {
-      transform: translateY(-1px)
-    }
-
-    #step-processing {
-      text-align: center;
-      padding: 20px 0
-    }
-
-    .spin {
-      width: 64px;
-      height: 64px;
-      margin: 0 auto 24px;
+    .spinner {
+      width: 48px;
+      height: 48px;
       border: 3px solid var(--bdr);
-      border-top-color: var(--gld);
+      border-top-color: var(--accent);
       border-radius: 50%;
-      animation: sp .8s linear infinite
+      animation: sp 0.8s linear infinite;
+      margin-bottom: 32px;
     }
 
     @keyframes sp {
       to {
-        transform: rotate(360deg)
+        transform: rotate(360deg);
       }
     }
 
-    .pss {
-      margin: 32px 0
-    }
-
-    .ps {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--bdr);
-      font-size: .9rem;
-      color: var(--mut);
-      transition: color .3s
-    }
-
-    .ps.on {
-      color: var(--txt)
-    }
-
-    .ps.ok {
-      color: var(--grn)
-    }
-
-    #step-done {
-      text-align: center
-    }
-
-    .okr {
+    /* Done section */
+    .done-check {
       width: 80px;
       height: 80px;
-      margin: 0 auto 24px;
       border-radius: 50%;
-      background: rgba(46, 201, 154, .1);
-      border: 2px solid rgba(46, 201, 154, .3);
+      background: rgba(34, 197, 94, 0.1);
+      border: 2px solid rgba(34, 197, 94, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 2.2rem;
-      animation: pp .4s cubic-bezier(.34, 1.56, .64, 1)
+      margin-bottom: 24px;
+      animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    @keyframes pp {
+    @keyframes pop-in {
       from {
-        transform: scale(0)
+        transform: scale(0);
       }
 
       to {
-        transform: scale(1)
+        transform: scale(1);
       }
     }
 
-    .theme-reveal {
-      background: rgba(255, 255, 255, .04);
-      border: 1px solid var(--bdr);
-      border-radius: 10px;
-      padding: 14px 18px;
-      margin: 16px 0;
-      display: flex;
+    /* ═══════════════════════════════════════
+       BUTTONS
+    ═══════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
       align-items: center;
-      gap: 14px
-    }
-
-    .tr-dot {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      border: 2px solid rgba(255, 255, 255, .2)
-    }
-
-    .tr-info {
-      text-align: left
-    }
-
-    .tr-name {
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 32px;
+      border: none;
+      border-radius: 4px;
+      font-family: var(--font-head);
+      font-size: 0.9rem;
       font-weight: 600;
-      font-size: .95rem
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
     }
 
-    .tr-sub {
-      font-size: .8rem;
-      color: var(--mut)
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      box-shadow: 0 4px 20px rgba(249, 115, 22, 0.3);
     }
 
-    .al {
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(249, 115, 22, 0.4);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--bdr);
+      color: var(--txt3);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-green {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.25);
+    }
+
+    .btn-green:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* ═══════════════════════════════════════
+       ALERTS
+    ═══════════════════════════════════════ */
+    .alert {
       padding: 12px 16px;
-      border-radius: 10px;
-      font-size: .875rem;
-      margin-bottom: 16px;
-      display: none
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      display: none;
+      max-width: 640px;
     }
 
-    .ae {
-      background: rgba(224, 90, 90, .1);
-      border: 1px solid rgba(224, 90, 90, .3);
-      color: #e88
+    .alert-err {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
     }
 
-    .ai {
-      background: rgba(201, 146, 42, .1);
-      border: 1px solid rgba(201, 146, 42, .3);
-      color: var(--glt);
-      display: block
+    /* ═══════════════════════════════════════
+       STEP INDICATOR (side)
+    ═══════════════════════════════════════ */
+    .step-indicator {
+      position: fixed;
+      right: 32px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 90;
     }
 
-    .sp {
-      display: none
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--bdr);
+      transition: all 0.4s;
+      cursor: pointer;
     }
 
-    .sp.active {
-      display: block
+    .step-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
     }
 
+    .step-dot.done {
+      background: var(--accent);
+    }
+
+    .step-line {
+      width: 1px;
+      height: 16px;
+      background: var(--bdr);
+      transition: background 0.4s;
+    }
+
+    .step-line.done {
+      background: var(--accent);
+    }
+
+    .sync-label {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-top: 8px;
+      writing-mode: vertical-rl;
+    }
+
+    /* ═══════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════ */
     footer {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 32px;
-      color: var(--mut);
-      font-size: .8rem;
-      border-top: 1px solid var(--bdr)
+      border-top: 1px solid var(--bdr);
+      padding: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    footer a {
-      color: var(--gld);
-      text-decoration: none
+    .footer-logo {
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
 
-    @media(max-width:580px) {
-      header {
-        padding: 16px 20px
+    .footer-logo span {
+      color: var(--accent);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--txt3);
+      transition: color 0.3s;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    /* ═══════════════════════════════════════
+       PHASE VISIBILITY
+    ═══════════════════════════════════════ */
+    .phase-content {
+      display: none;
+    }
+
+    .phase-content.active {
+      display: block;
+    }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════ */
+    @media (max-width: 768px) {
+      nav {
+        padding: 16px 20px;
       }
 
-      .card {
-        padding: 24px 20px;
-        margin: 0 16px 60px
+      .nav-status {
+        display: none;
       }
 
-      .frow {
-        grid-template-columns: 1fr
+      .hero {
+        padding: 100px 20px 48px;
       }
 
-      .si:not(:last-child) {
-        margin-right: 32px
+      .hero-circle {
+        display: none;
       }
 
-      .si:not(:last-child)::after {
-        width: 32px
+      .hero-bottom {
+        left: 20px;
+        right: 20px;
+      }
+
+      .section,
+      .manifesto,
+      .phase {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .beyond {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .step-indicator {
+        display: none;
+      }
+
+      footer {
+        flex-direction: column;
+        gap: 24px;
+        padding: 32px 20px;
+        text-align: center;
       }
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <div class="logo">Quu<span>bit</span></div>
-    <div class="badge">✦ Powered by Claude AI</div>
-  </header>
+
+  <!-- ═══ NAV ═══ -->
+  <nav>
+    <div class="nav-logo">QUU<span>BIT</span></div>
+    <div class="nav-status">Available for Projects</div>
+    <div class="nav-menu" onclick="document.getElementById('phase-section').scrollIntoView({behavior:'smooth'})">☰
+      Start</div>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
   <section class="hero">
-    <h1>Solve Your <em>Digital Design</em><br />Assignment Instantly</h1>
-    <p>Upload your assignment PDF, pay just ₹10, and get a complete formatted solution with your student details in
-      under a minute.</p>
+    <div class="hero-label reveal">
+      <div class="hero-label-line"></div>
+      <div class="hero-label-text">AI-Powered Assignment Solver</div>
+    </div>
+    <h1 class="reveal">
+      WE SOLVE<br />YOUR <em>DIGITAL<br />DESIGN</em>
+    </h1>
+    <div class="hero-sub reveal">— assignments</div>
+
+    <!-- Rotating circle -->
+    <div class="hero-circle">
+      <svg class="hero-circle-text" viewBox="0 0 160 160">
+        <defs>
+          <path id="circlePath" d="M 80, 80 m -65, 0 a 65,65 0 1,1 130,0 a 65,65 0 1,1 -130,0" />
+        </defs>
+        <text>
+          <textPath href="#circlePath">UPLOAD • SOLVE • DOWNLOAD • REPEAT • </textPath>
+        </text>
+      </svg>
+      <div class="hero-circle-center"
+        onclick="document.getElementById('phase-section').scrollIntoView({behavior:'smooth'})">▶</div>
+    </div>
+
+    <div class="hero-bottom">
+      <div class="hero-available">Available Now</div>
+      <div class="hero-scroll">Scroll</div>
+    </div>
   </section>
-  <div class="swrap">
-    <div class="si active" id="si-1">
-      <div class="sdot">1</div>
-      <div class="slbl">Your Info</div>
-    </div>
-    <div class="si" id="si-2">
-      <div class="sdot">2</div>
-      <div class="slbl">Upload</div>
-    </div>
-    <div class="si" id="si-3">
-      <div class="sdot">3</div>
-      <div class="slbl">Pay ₹10</div>
-    </div>
-    <div class="si" id="si-4">
-      <div class="sdot">✓</div>
-      <div class="slbl">Download</div>
+
+  <!-- ═══ MARQUEE ═══ -->
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <span>UPLOAD</span><span>•</span>
+      <span>SOLVE</span><span>•</span>
+      <span>DOWNLOAD</span><span>•</span>
+      <span>UPLOAD</span><span>•</span>
+      <span>SOLVE</span><span>•</span>
+      <span>DOWNLOAD</span><span>•</span>
+      <span>UPLOAD</span><span>•</span>
+      <span>SOLVE</span><span>•</span>
+      <span>DOWNLOAD</span><span>•</span>
+      <span>UPLOAD</span><span>•</span>
+      <span>SOLVE</span><span>•</span>
+      <span>DOWNLOAD</span><span>•</span>
     </div>
   </div>
-  <div class="card">
 
-    <!-- STEP 1 -->
-    <div class="sp active" id="step-1">
-      <div class="ct">Student Details</div>
-      <div class="cs">These appear on the cover page of your solution PDF.</div>
-      <div id="e1" class="al ae"></div>
-      <div class="frow">
-        <div class="fld"><label>Full Name</label><input type="text" id="sn" placeholder="Aryan Mehta" /></div>
-        <div class="fld"><label>Roll Number</label><input type="text" id="sr" placeholder="22CS045" /></div>
-      </div>
-      <div class="frow">
-        <div class="fld"><label>Batch / Section</label><input type="text" id="sb" placeholder="B-2, 2022–26" /></div>
-        <div class="fld"><label>Subject</label><input type="text" id="ss" placeholder="Digital Design (EC301)" /></div>
-      </div>
-      <div class="fld"><label>Institute Name</label><input type="text" id="sinst"
-          placeholder="ABC Engineering College" /></div>
+  <!-- ═══ BEYOND SECTION ═══ -->
+  <section class="section beyond">
+    <div class="reveal-left">
+      <div class="section-label">01 • What We Do</div>
+      <div class="beyond-title">BEYOND<br /><em>MANUAL</em></div>
+    </div>
+    <div class="reveal-right">
+      <p class="beyond-text">
+        We don't just format answers; we build complete, professional solutions. <strong>Quubit</strong> combines
+        AI-driven intelligence with cinematic document design to create assignment solutions that feel alive.
+      </p>
+      <button class="beyond-cta" onclick="document.getElementById('phase-section').scrollIntoView({behavior:'smooth'})">
+        <div class="beyond-cta-arrow">↓</div>
+        <div class="beyond-cta-label">Start Solving</div>
+      </button>
+    </div>
+  </section>
 
-      <!-- Theme preview -->
-      <div class="tlabel">Your PDF theme will be randomly assigned</div>
-      <div class="theme-preview">
-        <div class="tchip" data-name="Classic Navy" style="background:linear-gradient(135deg,#0a1232,#d4af37)"></div>
-        <div class="tchip" data-name="Forest Green" style="background:linear-gradient(135deg,#0c1e14,#50b478)"></div>
-        <div class="tchip" data-name="Maroon Univ." style="background:linear-gradient(135deg,#26080e,#c3a064)"></div>
-        <div class="tchip" data-name="Slate Tech" style="background:linear-gradient(135deg,#16181e,#eb6e28)"></div>
-        <div class="tchip" data-name="Purple Elegant" style="background:linear-gradient(135deg,#120826,#be9beb)"></div>
-        <div class="tchip" data-name="Teal Modern" style="background:linear-gradient(135deg,#082026,#20b9be)"></div>
-      </div>
+  <!-- ═══ MANIFESTO ═══ -->
+  <div class="manifesto">
+    <div class="section-label reveal">02 • Who We Are</div>
+    <p class="reveal">
+      <strong>WE ARE NOT JUST A TOOL.</strong> WE ARE YOUR AI PROFESSOR. IN A WORLD OF GENERIC SOLVERS,
+      <strong>WE CRAFT THE SIGNAL.</strong> WE BLEND INTELLIGENT ANALYSIS WITH <strong>PREMIUM DOCUMENT
+        DESIGN</strong> TO BUILD SOLUTIONS THAT DON'T JUST EXIST—<strong>THEY IMPRESS.</strong>
+    </p>
+  </div>
 
-      <button class="btn bg" onclick="g2()">Continue to Upload →</button>
+  <!-- ═══ STEP INDICATOR (fixed side) ═══ -->
+  <div class="step-indicator" id="stepNav">
+    <div class="step-dot active" id="sd-1"></div>
+    <div class="step-line" id="sl-1"></div>
+    <div class="step-dot" id="sd-2"></div>
+    <div class="step-line" id="sl-2"></div>
+    <div class="step-dot" id="sd-3"></div>
+    <div class="step-line" id="sl-3"></div>
+    <div class="step-dot" id="sd-4"></div>
+    <div class="sync-label">SYNC</div>
+  </div>
+
+  <!-- ═══ PHASES ═══ -->
+  <div class="phases" id="phase-section">
+
+    <!-- PHASE 1: DETAILS -->
+    <div class="phase" id="phase-1">
+      <div class="phase-number reveal">Phase 01</div>
+      <div class="phase-title reveal">DETAILS</div>
+      <div class="phase-desc reveal">Enter your student information. This appears on the cover page of your solution.
+      </div>
+      <div class="phase-content active" id="pc-1">
+        <div id="e1" class="alert alert-err"></div>
+        <div class="form-grid reveal">
+          <div class="form-field">
+            <label>Full Name</label>
+            <input type="text" id="sn" placeholder="Aryan Mehta" />
+          </div>
+          <div class="form-field">
+            <label>Roll Number</label>
+            <input type="text" id="sr" placeholder="22CS045" />
+          </div>
+          <div class="form-field">
+            <label>Batch / Section</label>
+            <input type="text" id="sb" placeholder="B-2, 2022–26" />
+          </div>
+          <div class="form-field">
+            <label>Subject</label>
+            <input type="text" id="ss" placeholder="Digital Design (EC301)" />
+          </div>
+          <div class="form-field full">
+            <label>Institute Name</label>
+            <input type="text" id="sinst" placeholder="ABC Engineering College" />
+          </div>
+        </div>
+        <div style="margin-top:32px" class="reveal">
+          <button class="btn btn-primary" onclick="g2()">Continue to Upload →</button>
+        </div>
+      </div>
     </div>
 
-    <!-- STEP 2 -->
-    <div class="sp" id="step-2">
-      <div class="ct">Upload Assignment</div>
-      <div class="cs">Upload your Digital Design assignment as a PDF. Questions are extracted automatically.</div>
-      <div id="e2" class="al ae"></div>
-      <div class="uz" id="dz">
-        <input type="file" id="fi" accept=".pdf" onchange="hf(this)" />
-        <div class="uic">📄</div>
-        <h3>Drop your PDF here</h3>
-        <p>or click to browse &nbsp;·&nbsp; Max 10 MB</p>
+    <!-- PHASE 2: UPLOAD -->
+    <div class="phase" id="phase-2">
+      <div class="phase-number reveal">Phase 02</div>
+      <div class="phase-title reveal">UPLOAD</div>
+      <div class="phase-desc reveal">Drop your Digital Design assignment PDF. Questions are extracted automatically.
       </div>
-      <div id="finfo" style="display:none">
-        <div class="ftag">
-          <span>✅</span>
-          <div>
-            <div style="font-size:.9rem" id="fn"></div>
-            <div style="font-size:.8rem;color:var(--mut)" id="fs"></div>
+      <div class="phase-content" id="pc-2">
+        <div id="e2" class="alert alert-err"></div>
+        <div class="upload-zone reveal" id="dz">
+          <input type="file" id="fi" accept=".pdf" onchange="hf(this)" />
+          <div class="upload-icon">📄</div>
+          <h3>Drop your PDF here</h3>
+          <p>or click to browse &nbsp;·&nbsp; Max 10 MB</p>
+        </div>
+        <div id="finfo" style="display:none">
+          <div class="file-tag">
+            <span>✅</span>
+            <div>
+              <div style="font-size:.9rem" id="fn"></div>
+              <div style="font-size:.8rem;color:var(--txt3)" id="fs"></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:32px;display:flex;gap:12px" class="reveal">
+          <button class="btn btn-primary" onclick="g3()">Continue →</button>
+          <button class="btn btn-outline" onclick="goPhase(1)">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 3: GENERATE -->
+    <div class="phase" id="phase-3">
+      <div class="phase-number reveal">Phase 03</div>
+      <div class="phase-title reveal">GENERATE</div>
+      <div class="phase-desc reveal">AI-powered solution generation in under 60 seconds.</div>
+      <div class="phase-content" id="pc-3">
+        <div id="e3" class="alert alert-err"></div>
+
+        <!-- Pre-solve: summary + pay button -->
+        <div id="pre-solve">
+          <div class="pay-box reveal">
+            <div class="pay-row"><span>Student</span><span id="pn">—</span></div>
+            <div class="pay-row"><span>Roll No.</span><span id="prn">—</span></div>
+            <div class="pay-row"><span>File</span><span id="pf">—</span></div>
+            <div class="pay-row total"><span>Total</span><span style="font-family:var(--font-head);font-size:1.1rem">₹
+                10.00</span></div>
+          </div>
+          <div class="reveal" style="display:flex;gap:12px">
+            <button class="btn btn-primary" id="payBtn" onclick="pay()">⚡ Bypass & Generate</button>
+            <button class="btn btn-outline" onclick="goPhase(2)">← Back</button>
+          </div>
+        </div>
+
+        <!-- Processing state -->
+        <div id="proc-state" style="display:none">
+          <div class="spinner"></div>
+          <div
+            style="font-family:var(--font-head);font-size:1.4rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">
+            Solving Assignment…</div>
+          <div style="color:var(--txt3);font-size:0.9rem;margin-bottom:32px">Please wait, don't close this tab.</div>
+          <div class="proc-steps">
+            <div class="proc-step" id="ps1">📖 &nbsp; Reading your PDF</div>
+            <div class="proc-step" id="ps2">🤖 &nbsp; AI analyzing questions</div>
+            <div class="proc-step" id="ps3">✍️ &nbsp; Writing detailed solutions</div>
+            <div class="proc-step" id="ps4">🎨 &nbsp; Applying theme &amp; building PDF</div>
           </div>
         </div>
       </div>
-      <button class="btn bg" onclick="g3()" style="margin-top:24px">Continue to Payment →</button>
-      <button class="btn bgh" onclick="gs(1)">← Back</button>
     </div>
 
-    <!-- STEP 3 -->
-    <div class="sp" id="step-3">
-      <div class="ct">Pay &amp; Solve</div>
-      <div class="cs">One-time payment of ₹10 per assignment solution.</div>
-      <div id="e3" class="al ae"></div>
-      <div class="al ai">⚡ Your AI-powered solution will be ready within 30–60 seconds after payment.</div>
-      <div class="pbox">
-        <div class="pr"><span>Student</span><span id="pn">—</span></div>
-        <div class="pr"><span>Roll No.</span><span id="prn">—</span></div>
-        <div class="pr"><span>File</span><span id="pf">—</span></div>
-        <div class="pr tot"><span>Total</span><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">₹
-            10.00</span></div>
-      </div>
-      <button class="btn bg" id="payBtn" onclick="pay()">⚡ Bypass Payment &amp; Get Solution</button>
-      <button class="btn bgh" onclick="gs(2)">← Back</button>
-    </div>
-
-    <!-- PROCESSING -->
-    <div class="sp" id="step-processing">
-      <div class="spin"></div>
-      <div class="ct" style="text-align:center;margin-bottom:6px">Solving Assignment…</div>
-      <div class="cs" style="text-align:center">Please wait, don't close this tab.</div>
-      <div class="pss">
-        <div class="ps" id="ps1">📖 &nbsp; Reading your PDF</div>
-        <div class="ps" id="ps2">🤖 &nbsp; AI analyzing questions</div>
-        <div class="ps" id="ps3">✍️ &nbsp; Writing detailed solutions</div>
-        <div class="ps" id="ps4">🎨 &nbsp; Applying your unique theme &amp; building PDF</div>
+    <!-- PHASE 4: DOWNLOAD -->
+    <div class="phase" id="phase-4">
+      <div class="phase-number reveal">Phase 04</div>
+      <div class="phase-title reveal">DOWNLOAD</div>
+      <div class="phase-desc reveal">Your professional assignment solution is ready.</div>
+      <div class="phase-content" id="pc-4">
+        <div class="done-check">✅</div>
+        <div
+          style="font-family:var(--font-head);font-size:1.6rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">
+          Solution Ready</div>
+        <div style="color:var(--txt3);font-size:0.9rem;margin-bottom:32px">Your A4 PDF has been generated with a
+          unique theme.</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="dl()">⬇ Download PDF</button>
+          <button class="btn btn-primary" onclick="preview()">👁 Preview</button>
+          <button class="btn btn-outline" onclick="rst()">Solve Another →</button>
+        </div>
       </div>
     </div>
 
-    <!-- DONE -->
-    <div class="sp" id="step-done">
-      <div class="okr">✅</div>
-      <div class="ct">Solution Ready!</div>
-      <div class="cs" style="margin-bottom:8px">Your assignment solution has been generated as a professional A4 PDF.
-      </div>
-      <button class="btn bgr" onclick="dl()">⬇ Download Solution PDF</button>
-      <button class="btn bg" onclick="preview()" style="margin-top:10px">👁 Preview in New Tab</button>
-      <button class="btn bgh" onclick="rst()">Solve Another →</button>
-    </div>
+  </div>
 
-  </div><!-- /card -->
-
+  <!-- ═══ FOOTER ═══ -->
   <footer>
-    Quubit &nbsp;·&nbsp; Powered by <a href="https://anthropic.com" target="_blank">Claude AI</a> &nbsp;·&nbsp; Payments
-    by <a href="https://razorpay.com" target="_blank">Razorpay</a><br /><br />
-    <small>For reference and study purposes only. Always understand what you submit.</small>
+    <div class="footer-logo">QUU<span>BIT</span></div>
+    <div class="footer-links">
+      <a href="#">Instagram</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">Twitter</a>
+    </div>
   </footer>
 
+  <!-- ═══ SCRIPTS ═══ -->
   <script>
     /* ═══════════════════════════════════════
        CONFIG
     ═══════════════════════════════════════ */
     const RK = 'rzp_live_SMrFP7iMMZCvt5';
-
-    /* ── State ── */
     let SD = {}, PF = null, PT = '', HTML_SOLUTION = null;
+    let currentPhase = 1;
 
-    /* ── Roll-number-based theme map (for UI reveal only) ── */
-    const THEME_MAP = {
-      '0': { name: 'Classic Navy', dot: 'linear-gradient(135deg,#0a1232,#d4af37)' },
-      '1': { name: 'Classic Navy', dot: 'linear-gradient(135deg,#0a1232,#d4af37)' },
-      '2': { name: 'Forest Green', dot: 'linear-gradient(135deg,#0c1e14,#50b478)' },
-      '3': { name: 'Forest Green', dot: 'linear-gradient(135deg,#0c1e14,#50b478)' },
-      '4': { name: 'Maroon University', dot: 'linear-gradient(135deg,#26080e,#c3a064)' },
-      '5': { name: 'Maroon University', dot: 'linear-gradient(135deg,#26080e,#c3a064)' },
-      '6': { name: 'Slate & Orange', dot: 'linear-gradient(135deg,#16181e,#eb6e28)' },
-      '7': { name: 'Slate & Orange', dot: 'linear-gradient(135deg,#16181e,#eb6e28)' },
-      '8': { name: 'Purple Elegant', dot: 'linear-gradient(135deg,#120826,#be9beb)' },
-      '9': { name: 'Teal Modern', dot: 'linear-gradient(135deg,#082026,#20b9be)' }
-    };
+    /* ═══════════════════════════════════════
+       SCROLL REVEAL (Intersection Observer)
+    ═══════════════════════════════════════ */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
+
+    /* ═══════════════════════════════════════
+       PDF.JS SETUP
+    ═══════════════════════════════════════ */
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     /* ── Drag-drop ── */
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const dz = document.getElementById('dz');
     dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag') });
     dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
@@ -779,76 +1292,129 @@
       document.getElementById('finfo').style.display = 'block';
     }
 
-    /* ── Steps ── */
-    function gs(n) {
-      document.querySelectorAll('.sp').forEach(p => p.classList.remove('active'));
-      document.getElementById('step-' + n).classList.add('active');
-      if (typeof n === 'number') [1, 2, 3, 4].forEach(i => { document.getElementById('si-' + i).classList.toggle('active', i === n); document.getElementById('si-' + i).classList.toggle('done', i < n) });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    /* ═══════════════════════════════════════
+       PHASE NAVIGATION
+    ═══════════════════════════════════════ */
+    function goPhase(n) {
+      currentPhase = n;
+      document.querySelectorAll('.phase-content').forEach(p => p.classList.remove('active'));
+      document.getElementById('pc-' + n).classList.add('active');
+
+      // Update step indicator
+      for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById('sd-' + i);
+        dot.classList.toggle('active', i === n);
+        dot.classList.toggle('done', i < n);
+        if (i < 4) {
+          document.getElementById('sl-' + i).classList.toggle('done', i < n);
+        }
+      }
+
+      // Scroll to phase
+      document.getElementById('phase-' + n).scrollIntoView({ behavior: 'smooth' });
+
+      // Re-observe new reveal elements
+      document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
     }
-    function err(s, m) { const e = document.getElementById('e' + s); e.textContent = '\u26a0 ' + m; e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 4000) }
+
+    function err(s, m) {
+      const e = document.getElementById('e' + s);
+      e.textContent = '\u26a0 ' + m;
+      e.style.display = 'block';
+      setTimeout(() => e.style.display = 'none', 4000);
+    }
+
     function g2() {
-      const n = document.getElementById('sn').value.trim(), r = document.getElementById('sr').value.trim(), b = document.getElementById('sb').value.trim(), s = document.getElementById('ss').value.trim(), ins = document.getElementById('sinst').value.trim();
+      const n = document.getElementById('sn').value.trim();
+      const r = document.getElementById('sr').value.trim();
+      const b = document.getElementById('sb').value.trim();
+      const s = document.getElementById('ss').value.trim();
+      const ins = document.getElementById('sinst').value.trim();
       if (!n || !r || !b || !s) { err(1, 'Please fill all required fields.'); return }
-      SD = { name: n, roll: r, batch: b, subject: s, inst: ins }; gs(2);
+      SD = { name: n, roll: r, batch: b, subject: s, inst: ins };
+      goPhase(2);
     }
+
     function g3() {
       if (!PF) { err(2, 'Please upload your assignment PDF first.'); return }
       document.getElementById('pn').textContent = SD.name;
       document.getElementById('prn').textContent = SD.roll;
       document.getElementById('pf').textContent = PF.name;
-      gs(3);
+      goPhase(3);
     }
 
-    /* ── Payment ── */
+    /* ═══════════════════════════════════════
+       PAYMENT
+    ═══════════════════════════════════════ */
     function pay() {
       // DEV MODE: BYPASS PAYMENT
       solve(); return;
     }
 
-    /* ── Extract PDF text ── */
+    /* ═══════════════════════════════════════
+       EXTRACT PDF TEXT
+    ═══════════════════════════════════════ */
     async function xt(file) {
-      const ab = await file.arrayBuffer(); const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
-      let t = ''; for (let i = 1; i <= pdf.numPages; i++) { const pg = await pdf.getPage(i); const c = await pg.getTextContent(); t += c.items.map(s => s.str).join(' ') + '\n\n'; }
+      const ab = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+      let t = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const pg = await pdf.getPage(i);
+        const c = await pg.getTextContent();
+        t += c.items.map(s => s.str).join(' ') + '\n\n';
+      }
       return t.trim();
     }
 
-    /* ── Process step highlight ── */
-    function ap(i) { [1, 2, 3, 4].forEach((n, idx) => { const el = document.getElementById('ps' + n); el.className = 'ps' + (idx < i ? ' ok' : idx === i ? ' on' : ''); }) }
-
-    /* ── Get theme from roll number (for UI reveal) ── */
-    function getThemeForRoll(roll) {
-      const digits = roll.replace(/\D/g, '');
-      const lastDigit = digits.length > 0 ? digits[digits.length - 1] : '0';
-      return THEME_MAP[lastDigit] || THEME_MAP['0'];
+    /* ═══════════════════════════════════════
+       PROCESS STEP HIGHLIGHT
+    ═══════════════════════════════════════ */
+    function ap(i) {
+      [1, 2, 3, 4].forEach((n, idx) => {
+        const el = document.getElementById('ps' + n);
+        el.className = 'proc-step' + (idx < i ? ' ok' : idx === i ? ' on' : '');
+      });
     }
 
-    /* ── Main solve ── */
+    /* ═══════════════════════════════════════
+       MAIN SOLVE
+    ═══════════════════════════════════════ */
     async function solve() {
-      document.querySelectorAll('.sp').forEach(p => p.classList.remove('active'));
-      document.getElementById('step-processing').classList.add('active');
+      document.getElementById('pre-solve').style.display = 'none';
+      document.getElementById('proc-state').style.display = 'block';
+
       try {
         ap(0); PT = await xt(PF);
         ap(1);
         const res = await fetch('/api/solve', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ student: SD, assignmentText: PT.substring(0, 8000) })
         });
-        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Server error') }
-        ap(2); const { solution } = await res.json();
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          throw new Error(d.error || 'Server error');
+        }
+        ap(2);
+        const { solution } = await res.json();
         ap(3);
 
-        // Store the HTML solution
         HTML_SOLUTION = solution;
 
-        document.querySelectorAll('.sp').forEach(p => p.classList.remove('active'));
-        document.getElementById('step-done').classList.add('active');
-        [1, 2, 3, 4].forEach(i => { document.getElementById('si-' + i).classList.add('done'); document.getElementById('si-' + i).classList.remove('active') });
+        // Move to download phase
+        setTimeout(() => goPhase(4), 800);
 
-      } catch (e) { gs(3); err(3, e.message || 'Something went wrong.'); document.getElementById('payBtn').disabled = false; }
+      } catch (e) {
+        document.getElementById('pre-solve').style.display = 'block';
+        document.getElementById('proc-state').style.display = 'none';
+        err(3, e.message || 'Something went wrong.');
+        document.getElementById('payBtn').disabled = false;
+      }
     }
 
-    /* ── Preview in new tab ── */
+    /* ═══════════════════════════════════════
+       PREVIEW
+    ═══════════════════════════════════════ */
     function preview() {
       if (!HTML_SOLUTION) return;
       const w = window.open('', '_blank');
@@ -856,14 +1422,15 @@
       w.document.close();
     }
 
-    /* ── Download as proper A4 PDF ── */
+    /* ═══════════════════════════════════════
+       DOWNLOAD PDF
+    ═══════════════════════════════════════ */
     async function dl() {
       if (!HTML_SOLUTION) return;
-      const btn = document.querySelector('.bgr');
+      const btn = document.querySelector('.btn-green');
       btn.textContent = '⏳ Generating PDF...';
       btn.disabled = true;
 
-      // Create a hidden iframe to render the HTML
       const iframe = document.createElement('iframe');
       iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;';
       document.body.appendChild(iframe);
@@ -871,7 +1438,6 @@
       iframe.contentDocument.write(HTML_SOLUTION);
       iframe.contentDocument.close();
 
-      // Wait for content to render
       await new Promise(r => setTimeout(r, 1500));
 
       const element = iframe.contentDocument.body;
@@ -889,7 +1455,6 @@
       try {
         await html2pdf().set(opt).from(element).save();
       } catch (e) {
-        // Fallback: download as HTML
         const blob = new Blob([HTML_SOLUTION], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -898,17 +1463,22 @@
       }
 
       document.body.removeChild(iframe);
-      btn.textContent = '\u2b07 Download Solution PDF';
+      btn.textContent = '⬇ Download PDF';
       btn.disabled = false;
     }
 
-    /* ── Reset ── */
+    /* ═══════════════════════════════════════
+       RESET
+    ═══════════════════════════════════════ */
     function rst() {
       PF = null; PT = ''; HTML_SOLUTION = null; SD = {};
       document.getElementById('fi').value = '';
       document.getElementById('finfo').style.display = 'none';
+      document.getElementById('pre-solve').style.display = 'block';
+      document.getElementById('proc-state').style.display = 'none';
       ['sn', 'sr', 'sb', 'ss', 'sinst'].forEach(id => document.getElementById(id).value = '');
-      gs(1);
+      goPhase(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   </script>
 </body>
